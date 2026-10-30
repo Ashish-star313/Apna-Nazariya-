@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#111827"><meta name="description" content="Apna Nazariya AI Creator Command Center">
+<link rel="manifest" href="/manifest.webmanifest">
+<title>Apna Nazariya AI</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1020;--panel:#151d31;--muted:#a8b3c7;--line:#2b3852;--gold:#f3b544;--green:#4ade80}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:#f7f8fb;font:16px system-ui, sans-serif}
+header{padding:22px 18px;background:linear-gradient(130deg,#18243b,#101827);border-bottom:1px solid var(--line)}
+h1{font-size:24px;margin:0 0 4px}header p{margin:0;color:var(--muted);font-size:13px}
+main{max-width:900px;margin:auto;padding:16px;display:grid;gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}
+h2{font-size:18px;margin:0 0 12px}.muted{color:var(--muted);font-size:13px}
+label{display:block;color:#d8dfeb;font-size:13px;margin:12px 0 6px}
+input,textarea,select{width:100%;padding:12px;border-radius:10px;border:1px solid var(--line);background:#0e1628;color:white;font:inherit}
+textarea{min-height:100px;resize:vertical}
+button{border:0;border-radius:10px;background:var(--gold);color:#1b1b1b;padding:11px 14px;font-weight:700;font-size:14px}
+button.secondary{background:#26344d;color:white;border:1px solid #40516f}
+button:disabled{opacity:.5}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+.agent{background:#10192b;border:1px solid var(--line);border-radius:12px;padding:12px;cursor:pointer}
+.agent.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
+.agent b{display:block;margin-bottom:4px}.agent small{color:var(--muted)}
+#output{white-space:pre-wrap;line-height:1.5;min-height:170px;font-size:13px}
+.status{font-size:12px;color:var(--green)}footer{text-align:center;color:var(--muted);font-size:12px;padding:10px}
+a{color:#f3c76f}
+</style>
+</head>
+<body>
+<header><h1>अपना नज़रिया · AI Command Center</h1><p>Soch Apni, Faisla Aapka · Two creators, one production desk</p></header>
+<main>
+<section class="card">
+<h2>Creator DNA & Project Setup</h2>
+<p class="muted">ये प्रोफाइल तुम्हारी हर Agent instruction में शामिल होगी। अभी PIN और database deployment के बाद shared cloud sync चालू होगा।</p>
+<label>Shared Project PIN (दोनों भाइयों के लिए एक)</label><input id="pin" type="password" placeholder="अपना secret PIN डालें">
+<label>Creator voice / भाषा</label><textarea id="voice">सरल बोलचाल वाली हिंदी, हल्का UP/desi touch। बातचीत स्वाभाविक हो, टीवी एंकर जैसी नहीं। दो भाइयों की अलग राय हो सकती है, लेकिन नकली बहस नहीं।</textarea>
+<label>Channel reference URLs (हर लाइन में एक YouTube URL)</label><textarea id="channels" placeholder="https://www.youtube.com/@channelname"></textarea>
+<div class="row"><button id="save">Cloud profile save करें</button><span id="status" class="status"></span></div>
+</section>
+<section class="card">
+<h2>Agent चुनें</h2><p class="muted">एक Agent चुनो, विषय लिखो और तैयार निर्देश कॉपी करके अपनी उपलब्ध AI चैट में चलाओ।</p>
+<div id="agents" class="grid"></div>
+</section>
+<section class="card">
+<h2>काम शुरू करें</h2>
+<label>आज का विषय / वीडियो आइडिया</label><textarea id="topic" placeholder="उदाहरण: रोजगार के आंकड़ों को आम युवा कैसे समझे?"></textarea>
+<label>विशेष निर्देश / संदर्भ (वैकल्पिक)</label><textarea id="extra" placeholder="Target audience, duration, दोनों भाइयों की राय, reference video URLs..."></textarea>
+<div class="row"><button id="make">Agent Prompt बनाएं</button><button class="secondary" id="copy">कॉपी करें</button><button class="secondary" id="open">AI Chat खोलें</button></div>
+</section>
+<section class="card"><h2>Generated Agent Brief</h2><div id="output" class="muted">Agent चुनकर विषय लिखें। यहां पूरा काम करने वाला prompt बनेगा।</div></section>
+<section class="card">
+<h2>अभी की सीमाएं</h2>
+<p class="muted">यह शुरुआती मोबाइल Command Center है। यह prompts, Creator DNA और channel references व्यवस्थित करता है। अपने आप YouTube चैनल scrape नहीं करता, न ही बिना model connection के AI उत्तर बनाता है। आगे verified model/API integration और analytics import जोड़े जाएंगे।</p>
+</section>
+<footer>Apna Nazariya AI · Open-source starter · No paid API configured</footer>
+</main>
+<script>
+const agents=[
+["manager","AI Manager","काम को सही specialist तक भेजना और final quality review"],
+["trend","Trend Hunter","समय-संवेदनशील विषय और audience relevance"],
+["competitor","Competitor Intelligence","Reference channels के formats और audience patterns"],
+["fact","Research & Fact Check","Primary sources, claims, dates और evidence"],
+["script","Human Scriptwriter","दो भाइयों के लिए original natural Hindi script"],
+["hook","Hook & Retention","Opening, pacing और drop-off सुधार"],
+["title","Title Specialist","Curiosity, clarity और honest title options"],
+["thumbnail","Thumbnail Designer","Visual concepts, text और image prompts"],
+["seo","SEO Specialist","Description, chapters, keywords और pinned comment"],
+["shorts","Shorts Producer","Long-form से context-safe Shorts"],
+["live","Live Producer","Remote two-person live run-of-show"],
+["analytics","Analytics Specialist","YouTube Studio data का वास्तविक analysis"],
+["growth","Growth Strategist","अगले वीडियो और measurable improvements"]
+];
+const instructions={
+manager:"You are the executive producer. Route this request through the relevant specialist steps, list missing inputs, enforce factual accuracy, and produce a complete review checklist. Do not claim work was performed without evidence.",
+trend:"Find current relevant topic opportunities. For each provide date, why now, audience relevance, source links, verification difficulty, risks, and a recommendation. Separate facts from speculation.",
+competitor:"Analyze only the supplied public YouTube channel/video URLs or provided transcripts/data. Compare topics, title structures, hooks, pacing, thumbnail patterns, comment questions and gaps. Do not invent views or copy scripts. State what could not be accessed.",
+fact:"Verify each factual claim using primary sources first: official documents, parliamentary records, datasets, original reports. Return claim, verdict, exact source URL, publisher, date, evidence and caveat. Label fact/allegation/opinion/inference. Never invent citations.",
+script:"Write an original natural Hindi two-brother conversation with light UP/desi touch. Avoid TV-anchor language and generic AI phrases. Include timestamps, speaker turns, facts with source notes, fair counterarguments, natural transitions and audience CTA. Do not manufacture disagreement or copy reference creators.",
+hook:"Create 5 truthful opening hooks. Improve first 30 seconds, pacing, curiosity loops and transitions. Flag repetition and any hook that overpromises.",
+title:"Create 12 title options, rank top 3 for clarity, curiosity and relevance. Avoid misleading clickbait and unsupported claims.",
+thumbnail:"Create 3 distinct mobile-readable thumbnail concepts: composition, expressions, background, 2-5 word text, contrast and image-generation prompt. Never depict fabricated evidence.",
+seo:"Prepare an accurate YouTube description, chapters, keywords, relevant hashtags, pinned comment and source links. No keyword stuffing.",
+shorts:"Identify 4-8 standalone clips from supplied transcript/timestamps. Provide in/out time, hook, caption, title and CTA. Preserve context and never distort speaker meaning.",
+live:"Create remote two-host run-of-show, speaker turns, timings, audience prompts, moderation and technical checklist for two Android phones. Include backup plan.",
+analytics:"Analyze only supplied YouTube Studio screenshots/CSV/metrics. Calculate comparisons where data permits. Never invent CTR, retention, views or subscriber counts. Give prioritized actions.",
+growth:"Use verified research and actual channel analytics to recommend next topics, packaging tests, publishing workflow and weekly goals. Distinguish evidence from hypotheses."
+};
+let selected="script";
+const agentBox=document.getElementById("agents");
+agents.forEach(([id,name,desc])=>{let d=document.createElement("div");d.className="agent"+(id===selected?" active":"");d.innerHTML=`<b>${name}</b><small>${desc}</small>`;d.onclick=()=>{selected=id;document.querySelectorAll(".agent").forEach(x=>x.classList.remove("active"));d.classList.add("active")};agentBox.appendChild(d)});
+const $=id=>document.getElementById(id);
+$("make").onclick=()=>{
+ const a=agents.find(x=>x[0]===selected),topic=$("topic").value.trim();
+ if(!topic){$("output").textContent="पहले विषय लिखें।";return}
+ const refs=$("channels").value.trim()||"अभी कोई reference channel URL नहीं दिया गया।";
+ const prompt=`PROJECT: APNA NAZARIYA\nBRAND: Soch Apni, Faisla Aapka\nCREATOR VOICE: ${$("voice").value}\nREFERENCE CHANNELS:\n${refs}\n\nSELECTED AGENT: ${a[1]}\nROLE INSTRUCTION: ${instructions[selected]}\n\nTOPIC:\n${topic}\n\nADDITIONAL CONTEXT:\n${$("extra").value||"कोई अतिरिक्त निर्देश नहीं।"}\n\nMANDATORY RULES:\n- Natural conversational Hindi; two real brothers, not TV anchors.\n- Original work only; learn patterns, never copy another creator.\n- Verify current/political claims and cite source URLs with dates.\n- Clearly label facts, allegations, opinions and uncertainty.\n- Never invent channel analytics or claim inaccessible channel research.\n- Ask for missing evidence instead of guessing.\n- Output must be practical and ready for human review.`;
+ $("output").textContent=prompt;
+};
+$("copy").onclick=async()=>{try{await navigator.clipboard.writeText($("output").textContent);$("status").textContent="Prompt copied";setTimeout(()=>$("status").textContent="",1800)}catch(e){$("status").textContent="Text select करके copy करें"}};
+$("open").onclick=()=>window.open("https://chatgpt.com/","_blank");
+$("save").onclick=async()=>{
+ const pin=$("pin").value.trim();if(!pin){$("status").textContent="पहले PIN डालें";return}
+ try{
+  const r=await fetch("/api/profile",{method:"POST",headers:{"Content-Type":"application/json","X-Project-PIN":pin},body:JSON.stringify({voice:$("voice").value,channels:$("channels").value.split("\n").map(x=>x.trim()).filter(Boolean)})});
+  const j=await r.json();$("status").textContent=j.ok?"Cloud profile saved":"Save failed: "+(j.error||r.status);
+ }catch(e){$("status").textContent="Cloud API अभी deploy/configure नहीं है"}
+};
+if("serviceWorker" in navigator)navigator.serviceWorker.register("/sw.js").catch(()=>{});
+</script>
+</body></html>
