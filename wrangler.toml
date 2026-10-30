@@ -9,5 +9,5 @@ binding = "ASSETS"
 [[d1_databases]]
 binding = "DB"
 database_name = "apna-nazariya-db"
-database_id = "REPLACE_WITH_YOUR_D1_DATABASE_ID"
+database_id = "b34adb9a-67e7-4824-bb11-b31fededc3bb"
 migrations_dir = "migrations"
