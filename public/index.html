@@ -54,13 +54,14 @@ textarea{min-height:100px;resize:vertical}
 button{
  border:0;border-radius:10px;background:var(--gold);
  color:#1b1b1b;padding:11px 14px;
- font-weight:700;font-size:14px
+ font-weight:700;font-size:14px;
+ cursor:pointer
 }
 button.secondary{
  background:#26344d;color:white;
  border:1px solid #40516f
 }
-button:disabled{opacity:.5}
+button:disabled{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .grid{
  display:grid;
@@ -86,6 +87,18 @@ button:disabled{opacity:.5}
  white-space:pre-wrap;line-height:1.7;
  margin-top:14px;font-size:14px;
  overflow-wrap:anywhere
+}
+.answer-actions{
+ display:flex;gap:8px;flex-wrap:wrap;
+ margin-top:12px
+}
+#copyAnswer{
+ background:#26344d;color:white;
+ border:1px solid #40516f
+}
+#copyAnswer.copied{
+ background:#14532d;color:#dcfce7;
+ border-color:#166534
 }
 footer{
  text-align:center;color:var(--muted);
@@ -166,7 +179,13 @@ PIN और database deployment के बाद shared cloud sync चालू �
 </div>
 
 <p id="aiStatus" class="status"></p>
+
 <div id="aiAnswer" class="muted"></div>
+
+<div class="answer-actions">
+<button id="copyAnswer" disabled>📋 जवाब कॉपी करें</button>
+</div>
+
 </section>
 
 <section class="card">
@@ -325,6 +344,49 @@ $("useBrief").onclick=()=>{
  $("aiStatus").textContent="Brief तैयार है। अब AI से जवाब लें।";
 };
 
+// AI जवाब कॉपी करने का फीचर
+$("copyAnswer").onclick=async()=>{
+ const answer=$("aiAnswer").textContent.trim();
+
+ if(!answer){
+  $("aiStatus").textContent="कॉपी करने के लिए कोई जवाब नहीं है।";
+  return;
+ }
+
+ const btn=$("copyAnswer");
+
+ try{
+  if(navigator.clipboard && window.isSecureContext){
+   await navigator.clipboard.writeText(answer);
+  }else{
+   const temp=document.createElement("textarea");
+   temp.value=answer;
+   temp.style.position="fixed";
+   temp.style.opacity="0";
+   document.body.appendChild(temp);
+   temp.focus();
+   temp.select();
+
+   const copied=document.execCommand("copy");
+   temp.remove();
+
+   if(!copied) throw new Error("Copy failed");
+  }
+
+  btn.textContent="✓ Copied!";
+  btn.classList.add("copied");
+  $("aiStatus").textContent="पूरा AI जवाब कॉपी हो गया!";
+
+  setTimeout(()=>{
+   btn.textContent="📋 जवाब कॉपी करें";
+   btn.classList.remove("copied");
+  },2000);
+
+ }catch(e){
+  $("aiStatus").textContent="कॉपी नहीं हुआ। दोबारा कोशिश करें।";
+ }
+};
+
 // वास्तविक Workers AI API कनेक्शन
 $("aiSend").onclick=async()=>{
  const pin=$("pin").value.trim();
@@ -341,8 +403,11 @@ $("aiSend").onclick=async()=>{
  }
 
  $("aiSend").disabled=true;
+ $("copyAnswer").disabled=true;
  $("aiStatus").textContent="AI जवाब तैयार कर रहा है...";
  $("aiAnswer").textContent="";
+ $("copyAnswer").textContent="📋 जवाब कॉपी करें";
+ $("copyAnswer").classList.remove("copied");
 
  try{
   const r=await fetch("/api/ai",{
@@ -362,6 +427,10 @@ $("aiSend").onclick=async()=>{
 
   $("aiAnswer").textContent=data.answer||"AI से खाली जवाब मिला।";
   $("aiStatus").textContent="जवाब मिल गया!";
+
+  if(data.answer && data.answer.trim()){
+   $("copyAnswer").disabled=false;
+  }
 
  }catch(e){
   $("aiStatus").textContent="समस्या: "+e.message;
