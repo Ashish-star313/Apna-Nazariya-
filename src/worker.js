@@ -93,22 +93,38 @@ export default {
               messages: [
                 {
                   role: "system",
-                  content: "You are Apna Nazariya AI. Reply in natural Hindi unless asked otherwise. Be factual, clear and honest. Never invent facts or sources."
+                  content: "You are Apna Nazariya AI. Reply in natural Hindi. Be factual, clear and honest. Never invent facts or sources."
                 },
                 {
                   role: "user",
                   content: prompt
                 }
               ],
+              chat_template_kwargs: {
+                enable_thinking: false
+              },
               max_tokens: 1200
             }
           );
 
+          const answer =
+            result?.choices?.[0]?.message?.content ||
+            result?.response ||
+            "";
+
+          if (!answer) {
+            return Response.json(
+              {
+                ok: false,
+                error: "Model returned an empty answer",
+                details: JSON.stringify(result).slice(0, 1500)
+              },
+              { status: 502, headers: cors }
+            );
+          }
+
           return Response.json(
-            {
-              ok: true,
-              answer: result.response || ""
-            },
+            { ok: true, answer },
             { headers: cors }
           );
 
