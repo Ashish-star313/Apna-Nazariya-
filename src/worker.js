@@ -1,4 +1,4 @@
-// Redeploy after login secrets configuration
+
 const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 const SESSION_DAYS = 14;
 const MAX_PROMPT_LENGTH = 12000;
@@ -38,7 +38,6 @@ const AGENTS = {
 Missing information, risks और quality checklist बताओ।
 अंत में अगले Agent के लिए उपयोगी निर्देश दो।
 `,
-
   "Trend Hunter": `
 तुम Topic Research Planner हो।
 Audience relevance, timeliness, interest और verification difficulty का विश्लेषण करो।
@@ -46,7 +45,6 @@ Live trend data उपलब्ध न होने पर साफ बता�
 पुराने ज्ञान को आज का trend मत बताओ।
 5 practical topic angles और उनके verification points दो।
 `,
-
   "Competitor Intelligence": `
 तुम Competitor Analysis Specialist हो।
 केवल दिए गए URLs, transcripts और data का विश्लेषण करो।
@@ -54,7 +52,6 @@ Titles, hooks, formats, audience questions और content gaps समझाओ�
 अज्ञात views, CTR या analytics मत बनाओ।
 किसी creator की script copy मत करो।
 `,
-
   "Research & Fact Check": `
 तुम Research और Fact Check Specialist हो।
 मुख्य factual claims अलग-अलग सूचीबद्ध करो।
@@ -65,15 +62,11 @@ Titles, hooks, formats, audience questions और content gaps समझाओ�
 - तारीख, यदि उपलब्ध हो
 - स्थिति: VERIFIED / UNVERIFIED / FALSE / NEEDS CONTEXT
 - आगे क्या जाँचना चाहिए
-
 बिना स्रोत किसी claim को VERIFIED मत बताना।
 `,
-
   "Human Scriptwriter": `
 तुम Apna Nazariya के मुख्य Human Scriptwriter हो।
-
 दो असली भारतीय भाइयों की स्वाभाविक बातचीत लिखो।
-
 STYLE:
 - रोजमर्रा की हिंदी।
 - छोटे और मध्यम संवाद।
@@ -82,7 +75,6 @@ STYLE:
 - नकली बहस या नकली सहमति मत बनाओ।
 - प्रमाणित उदाहरण ही वास्तविक घटना की तरह लिखो।
 - काल्पनिक उदाहरण को काल्पनिक बताओ।
-
 STRUCTURE:
 1. मजबूत Hook।
 2. आम आदमी की समस्या।
@@ -92,59 +84,50 @@ STRUCTURE:
 6. उपलब्ध तथ्य और Source Notes।
 7. दर्शक के लिए नया नजरिया।
 8. अंत में सोचने वाला सवाल और CTA।
-
 पहले 3 Hook विकल्प दो।
 फिर पूरी बातचीत।
 Speaker names Host 1 और Host 2 रखो।
 अनुमानित समय बताओ।
 अंत में Source Notes और Unverified Claims दो।
 `,
-
   "Hook & Retention": `
 पहले 30 सेकंड के लिए 5 अलग Hook बनाओ।
 Curiosity और clarity बढ़ाओ।
 झूठा suspense मत बनाओ।
 Pacing, transitions और repetition की समीक्षा करो।
 `,
-
   "Title Specialist": `
 12 YouTube Titles बनाओ।
 Top 3 को clarity, curiosity और relevance के आधार पर rank करो।
 Misleading clickbait मत बनाओ।
 `,
-
   "Thumbnail Designer": `
 3 अलग thumbnail concepts बनाओ।
 Composition, expressions, background और 2-5 शब्दों का text दो।
 Mobile readability प्राथमिकता हो।
 Fabricated evidence या misleading visuals मत सुझाओ।
 `,
-
   "SEO Specialist": `
 Accurate YouTube description, chapters, keywords,
 hashtags, source links और pinned comment बनाओ।
 Keyword stuffing मत करो।
 `,
-
   "Shorts Producer": `
 दिए गए transcript से standalone Shorts ideas बनाओ।
 Hook, timestamps केवल उपलब्ध हों तो,
 caption, title और CTA दो।
 बात का अर्थ बदलकर प्रस्तुत मत करो।
 `,
-
   "Live Producer": `
 दो Android फोन से दो-host live show का run-of-show बनाओ।
 Timing, speaker turns, audience questions,
 moderation और backup checklist दो।
 `,
-
   "Analytics Specialist": `
 केवल दिए गए वास्तविक YouTube Studio data का विश्लेषण करो।
 CTR, retention, views या subscribers खुद से मत बनाओ।
 जहाँ data नहीं है, साफ बताओ।
 `,
-
   "Growth Strategist": `
 Channel growth के लिए practical weekly plan बनाओ।
 Actual analytics और assumptions अलग रखो।
@@ -165,9 +148,8 @@ function json(data, status = 200, headers = {}) {
 
 function getCookie(request, name) {
   const cookie = request.headers.get("Cookie") || "";
-  const parts = cookie.split(";");
 
-  for (const part of parts) {
+  for (const part of cookie.split(";")) {
     const index = part.indexOf("=");
     if (index < 0) continue;
 
@@ -290,14 +272,8 @@ async function runModel(env, systemPrompt, userPrompt) {
 
   const result = await env.AI.run(MODEL, {
     messages: [
-      {
-        role: "system",
-        content: systemPrompt
-      },
-      {
-        role: "user",
-        content: userPrompt
-      }
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userPrompt }
     ],
     chat_template_kwargs: {
       enable_thinking: false
@@ -320,13 +296,11 @@ async function runModel(env, systemPrompt, userPrompt) {
 
 function buildAgentPrompt(agent, input, previousOutputs) {
   const history = previousOutputs
-    .map(item => {
-      return `
+    .map(item => `
 AGENT: ${item.agent_name}
 OUTPUT:
 ${String(item.output_text || "").slice(0, 2200)}
-`;
-    })
+`)
     .join("\n")
     .slice(-MAX_OUTPUT_CONTEXT);
 
@@ -362,12 +336,6 @@ ${AGENTS[agent] || "काम का स्पष्ट और उपयोग�
 `;
 }
 
-/*
-  Workflow routing:
-  AI Manager हमेशा पहला step है।
-  बाकी Agents विषय और उपयोगकर्ता के काम के अनुसार चुने जाते हैं।
-  यह routing rule-based है, live browsing नहीं।
-*/
 function chooseAgents(topic, extra) {
   const text = `${topic} ${extra}`.toLowerCase();
   const selected = ["AI Manager"];
@@ -376,27 +344,19 @@ function chooseAgents(topic, extra) {
     if (!selected.includes(name)) selected.push(name);
   };
 
-  if (
-    /trend|trending|viral|आज|ताजा|ताज़ा|current|news|खबर|मुद्दा|विषय/i.test(text)
-  ) {
+  if (/trend|trending|viral|आज|ताजा|ताज़ा|current|news|खबर|मुद्दा|विषय/i.test(text)) {
     add("Trend Hunter");
   }
 
-  if (
-    /competitor|competitors|reference channel|दूसरे चैनल|प्रतिस्पर्धी|youtube channel/i.test(text)
-  ) {
+  if (/competitor|competitors|reference channel|दूसरे चैनल|प्रतिस्पर्धी|youtube channel/i.test(text)) {
     add("Competitor Intelligence");
   }
 
-  if (
-    /fact|verify|research|रिसर्च|स्रोत|आंक|आँक|सरकार|राजनीति|चुनाव|बेरोजगार|रोजगार|कानून|दावा|डेटा|data/i.test(text)
-  ) {
+  if (/fact|verify|research|रिसर्च|स्रोत|आंक|आँक|सरकार|राजनीति|चुनाव|बेरोजगार|रोजगार|कानून|दावा|डेटा|data/i.test(text)) {
     add("Research & Fact Check");
   }
 
-  if (
-    /script|स्क्रिप्ट|वीडियो|video|discussion|चर्चा|बातचीत|long form/i.test(text)
-  ) {
+  if (/script|स्क्रिप्ट|वीडियो|video|discussion|चर्चा|बातचीत|long form/i.test(text)) {
     add("Human Scriptwriter");
     add("Hook & Retention");
     add("Title Specialist");
@@ -412,7 +372,7 @@ function chooseAgents(topic, extra) {
     add("Live Producer");
   }
 
-  if (/analytics|analysis|ctr|retention|views|views|youtube studio|एनालिटिक्स/i.test(text)) {
+  if (/analytics|analysis|ctr|retention|views|youtube studio|एनालिटिक्स/i.test(text)) {
     add("Analytics Specialist");
   }
 
@@ -440,10 +400,6 @@ async function saveProfile(env, body) {
     VALUES ('voice', ?)
   `).bind(voice).run();
 
-  /*
-    Default: पुराने URLs को सुरक्षित रखते हुए नए URLs जोड़ो।
-    Replace तभी होगा जब replaceChannels=true स्पष्ट रूप से भेजा जाए।
-  */
   if (Array.isArray(body.channels)) {
     const channels = [...new Set(
       body.channels
@@ -531,12 +487,7 @@ async function startWorkflow(env, body) {
       INSERT INTO workflow_jobs
       (id, project_id, status, current_step, input_json)
       VALUES (?, ?, 'queued', ?, ?)
-    `).bind(
-      jobId,
-      projectId,
-      agents[0],
-      JSON.stringify(input)
-    )
+    `).bind(jobId, projectId, agents[0], JSON.stringify(input))
   ];
 
   agents.forEach((agent, index) => {
@@ -568,19 +519,13 @@ async function startWorkflow(env, body) {
 
 async function getWorkflowStatus(env, jobId) {
   const job = await env.DB.prepare(`
-    SELECT *
-    FROM workflow_jobs
-    WHERE id = ?
+    SELECT * FROM workflow_jobs WHERE id = ?
   `).bind(jobId).first();
 
   if (!job) {
     return json({ ok: false, error: "Workflow not found" }, 404);
   }
 
-  /*
-    यदि Worker अचानक बंद हुआ और Agent 10 मिनट से running है,
-    तो उसे queued कर दो ताकि user Resume कर सके।
-  */
   await env.DB.prepare(`
     UPDATE agent_runs
     SET status = 'queued',
@@ -685,10 +630,6 @@ async function executeWorkflowStep(env, jobId) {
     return json({ ok: true, done: true, status: "completed" });
   }
 
-  /*
-    Conditional update: एक ही Agent को दो requests एक साथ
-    execute न कर सकें।
-  */
   const lock = await env.DB.prepare(`
     UPDATE agent_runs
     SET status = 'running',
@@ -822,10 +763,7 @@ ${AGENTS[next.agent_name] || "काम का स्पष्ट और उप�
         SET status = 'queued',
             error_message = ?
         WHERE id = ?
-      `).bind(
-        String(error.message || error).slice(0, 1000),
-        next.id
-      ),
+      `).bind(String(error.message || error).slice(0, 1000), next.id),
 
       env.DB.prepare(`
         UPDATE workflow_jobs
@@ -943,7 +881,7 @@ export default {
       return json({
         ok: true,
         service: "Apna Nazariya AI API",
-        version: "2.0"
+        version: "2.1"
       });
     }
 
@@ -954,9 +892,7 @@ export default {
     if (method === "OPTIONS") {
       return new Response(null, {
         status: 204,
-        headers: {
-          "Cache-Control": "no-store"
-        }
+        headers: { "Cache-Control": "no-store" }
       });
     }
 
@@ -964,13 +900,21 @@ export default {
       return json({ ok: false, error: "Invalid request origin" }, 403);
     }
 
+    // TEMPORARY DIAGNOSTIC: only boolean status, never secret values.
+    if (path === "/api/secret-check" && method === "GET") {
+      return json({
+        ok: true,
+        appLoginIdConfigured: Boolean(env.APP_LOGIN_ID),
+        appLoginPasswordConfigured: Boolean(env.APP_LOGIN_PASSWORD),
+        databaseConfigured: Boolean(env.DB),
+        aiConfigured: Boolean(env.AI)
+      });
+    }
+
     if (!env.DB) {
       return json({ ok: false, error: "D1 database binding missing" }, 500);
     }
 
-    /*
-      LOGIN
-    */
     if (path === "/api/login" && method === "POST") {
       if (!env.APP_LOGIN_ID || !env.APP_LOGIN_PASSWORD) {
         return json({
@@ -1031,9 +975,6 @@ export default {
       });
     }
 
-    /*
-      LOGOUT: केवल इसी फोन का session delete होगा।
-    */
     if (path === "/api/logout" && method === "POST") {
       const token = getCookie(request, "an_session");
 
@@ -1054,9 +995,6 @@ export default {
       });
     }
 
-    /*
-      LOGIN STATUS
-    */
     if (path === "/api/me" && method === "GET") {
       const session = await authenticate(request, env);
 
@@ -1066,9 +1004,6 @@ export default {
       });
     }
 
-    /*
-      बाकी सभी API के लिए login जरूरी है।
-    */
     const session = await authenticate(request, env);
 
     if (!session) {
@@ -1078,9 +1013,6 @@ export default {
       }, 401);
     }
 
-    /*
-      PROFILE
-    */
     if (path === "/api/profile" && method === "GET") {
       return getProfile(env);
     }
@@ -1100,9 +1032,6 @@ export default {
       });
     }
 
-    /*
-      MANUAL AI CHAT
-    */
     if (path === "/api/ai" && method === "POST") {
       const body = await readBody(request);
 
@@ -1149,9 +1078,6 @@ ${AGENTS[agentName] || "उपयोगकर्ता के काम का �
       }
     }
 
-    /*
-      WORKFLOW START
-    */
     if (path === "/api/workflow/start" && method === "POST") {
       const body = await readBody(request);
 
@@ -1162,9 +1088,6 @@ ${AGENTS[agentName] || "उपयोगकर्ता के काम का �
       return startWorkflow(env, body);
     }
 
-    /*
-      WORKFLOW STEP
-    */
     if (path === "/api/workflow/step" && method === "POST") {
       const body = await readBody(request);
       const jobId = String(body?.jobId || "");
@@ -1176,9 +1099,6 @@ ${AGENTS[agentName] || "उपयोगकर्ता के काम का �
       return executeWorkflowStep(env, jobId);
     }
 
-    /*
-      WORKFLOW STATUS
-    */
     if (path === "/api/workflow/status" && method === "GET") {
       const jobId = url.searchParams.get("jobId") || "";
 
@@ -1189,9 +1109,6 @@ ${AGENTS[agentName] || "उपयोगकर्ता के काम का �
       return getWorkflowStatus(env, jobId);
     }
 
-    /*
-      WORKFLOW RESUME
-    */
     if (path === "/api/workflow/resume" && method === "POST") {
       const body = await readBody(request);
       const jobId = String(body?.jobId || "");
@@ -1203,16 +1120,10 @@ ${AGENTS[agentName] || "उपयोगकर्ता के काम का �
       return resumeWorkflow(env, jobId);
     }
 
-    /*
-      PROJECT HISTORY
-    */
     if (path === "/api/projects" && method === "GET") {
       return listProjects(env);
     }
 
-    /*
-      SINGLE PROJECT DETAILS
-    */
     if (path.startsWith("/api/projects/") && method === "GET") {
       const projectId = decodeURIComponent(
         path.slice("/api/projects/".length)
