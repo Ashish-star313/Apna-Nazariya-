@@ -1,4 +1,4 @@
-
+// Redeploy after login secrets configuration
 const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 const SESSION_DAYS = 14;
 const MAX_PROMPT_LENGTH = 12000;
