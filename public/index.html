@@ -4,444 +4,785 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#111827">
+<meta name="theme-color" content="#0b1020">
 <meta name="description" content="Apna Nazariya AI Creator Command Center">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>Apna Nazariya AI</title>
 
 <style>
 :root{
- color-scheme:dark;
- --bg:#0b1020;
- --panel:#151d31;
- --muted:#a8b3c7;
- --line:#2b3852;
- --gold:#f3b544;
- --green:#4ade80
+  color-scheme:dark;
+  --bg:#0b1020;
+  --panel:#151d31;
+  --muted:#a8b3c7;
+  --line:#2b3852;
+  --gold:#f3b544;
+  --green:#4ade80;
+  --red:#f87171;
 }
 *{box-sizing:border-box}
 body{
- margin:0;background:var(--bg);color:#f7f8fb;
- font:16px system-ui,sans-serif
+  margin:0;background:var(--bg);color:#f7f8fb;
+  font:15px system-ui,sans-serif
 }
 header{
- padding:22px 18px;
- background:linear-gradient(130deg,#18243b,#101827);
- border-bottom:1px solid var(--line)
+  padding:20px 16px;
+  background:linear-gradient(130deg,#18243b,#101827);
+  border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;
+  align-items:center;gap:12px;flex-wrap:wrap
 }
-h1{font-size:24px;margin:0 0 4px}
-header p{margin:0;color:var(--muted);font-size:13px}
-main{
- max-width:900px;margin:auto;padding:16px;
- display:grid;gap:14px
-}
+h1{font-size:23px;margin:0 0 4px}
+header p{margin:0;color:var(--muted);font-size:12px}
+main{max-width:1000px;margin:auto;padding:14px;display:grid;gap:14px}
 .card{
- background:var(--panel);border:1px solid var(--line);
- border-radius:16px;padding:16px
+  background:var(--panel);border:1px solid var(--line);
+  border-radius:15px;padding:16px
 }
 h2{font-size:18px;margin:0 0 12px}
-.muted{color:var(--muted);font-size:13px}
-label{
- display:block;color:#d8dfeb;font-size:13px;
- margin:12px 0 6px
-}
+h3{font-size:15px;margin:12px 0 6px}
+.muted{color:var(--muted);font-size:13px;line-height:1.6}
+label{display:block;color:#d8dfeb;font-size:13px;margin:12px 0 6px}
 input,textarea,select{
- width:100%;padding:12px;border-radius:10px;
- border:1px solid var(--line);
- background:#0e1628;color:white;font:inherit
+  width:100%;padding:12px;border-radius:10px;
+  border:1px solid var(--line);
+  background:#0e1628;color:white;font:inherit
 }
-textarea{min-height:100px;resize:vertical}
+textarea{min-height:90px;resize:vertical}
 button{
- border:0;border-radius:10px;background:var(--gold);
- color:#1b1b1b;padding:11px 14px;
- font-weight:700;font-size:14px;
- cursor:pointer
+  border:0;border-radius:10px;background:var(--gold);
+  color:#1b1b1b;padding:11px 14px;
+  font-weight:700;font-size:14px;cursor:pointer
 }
 button.secondary{
- background:#26344d;color:white;
- border:1px solid #40516f
+  background:#26344d;color:white;border:1px solid #40516f
 }
+button.danger{background:#552b37;color:#fff}
 button:disabled{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .grid{
- display:grid;
- grid-template-columns:repeat(auto-fit,minmax(210px,1fr));
- gap:10px
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));
+  gap:9px
 }
 .agent{
- background:#10192b;border:1px solid var(--line);
- border-radius:12px;padding:12px;cursor:pointer
+  background:#10192b;border:1px solid var(--line);
+  border-radius:11px;padding:12px;cursor:pointer
 }
-.agent.active{
- border-color:var(--gold);
- box-shadow:0 0 0 1px var(--gold) inset
-}
+.agent.active{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset}
 .agent b{display:block;margin-bottom:4px}
-.agent small{color:var(--muted)}
-#output{
- white-space:pre-wrap;line-height:1.5;
- min-height:170px;font-size:13px
+.agent small{color:var(--muted);font-size:12px}
+.status{font-size:13px;color:var(--green);white-space:pre-wrap}
+.error{color:var(--red)}
+.hidden{display:none!important}
+.output{
+  white-space:pre-wrap;line-height:1.65;
+  overflow-wrap:anywhere;font-size:13px;
+  background:#0e1628;border:1px solid var(--line);
+  padding:13px;border-radius:10px;margin-top:9px
 }
-.status{font-size:12px;color:var(--green)}
-#aiAnswer{
- white-space:pre-wrap;line-height:1.7;
- margin-top:14px;font-size:14px;
- overflow-wrap:anywhere
+.project{
+  border:1px solid var(--line);background:#10192b;
+  border-radius:10px;padding:12px;margin:8px 0
 }
-.answer-actions{
- display:flex;gap:8px;flex-wrap:wrap;
- margin-top:12px
+.project button{margin-top:8px}
+.step{
+  padding:10px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;gap:10px;
+  font-size:13px
 }
-#copyAnswer{
- background:#26344d;color:white;
- border:1px solid #40516f
+.pill{
+  font-size:11px;padding:4px 8px;border-radius:20px;
+  background:#26344d;color:#e5e7eb;white-space:nowrap
 }
-#copyAnswer.copied{
- background:#14532d;color:#dcfce7;
- border-color:#166534
+.pill.completed{background:#14532d;color:#bbf7d0}
+.pill.running{background:#713f12;color:#fde68a}
+.pill.queued{background:#26344d}
+.pill.paused{background:#7f1d1d;color:#fecaca}
+.progress{
+  height:8px;background:#26344d;border-radius:10px;
+  overflow:hidden;margin:12px 0
 }
-footer{
- text-align:center;color:var(--muted);
- font-size:12px;padding:10px
-}
-a{color:#f3c76f}
+.progress div{height:100%;background:var(--gold);width:0%;transition:width .2s}
+#loginScreen{max-width:430px;margin:8vh auto;padding:16px}
+#loginScreen .card{padding:22px}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:15px}
+a{color:var(--gold)}
 </style>
 </head>
 
 <body>
 
+<section id="loginScreen">
+  <div class="card">
+    <h1>अपना नज़रिया</h1>
+    <p class="muted">AI Creator Command Center · सोच अपनी, फैसला आपका।</p>
+
+    <h2 style="margin-top:24px">Shared Workspace Login</h2>
+    <p class="muted">दोनों भाई एक ही Login ID और Password इस्तेमाल करेंगे।</p>
+
+    <form id="loginForm">
+      <label>Login ID</label>
+      <input id="loginId" autocomplete="username" placeholder="अपना Login ID" required>
+
+      <label>Password</label>
+      <input id="loginPassword" type="password"
+        autocomplete="current-password" placeholder="अपना Password" required>
+
+      <div class="row" style="margin-top:16px">
+        <button id="loginButton" type="submit">Login करें</button>
+      </div>
+    </form>
+    <p id="loginStatus" class="status"></p>
+  </div>
+</section>
+
+<div id="app" class="hidden">
+
 <header>
-<h1>अपना नज़रिया · AI Command Center</h1>
-<p>Soch Apni, Faisla Aapka · Two creators, one production desk</p>
+  <div>
+    <h1>अपना नज़रिया · AI Command Center</h1>
+    <p>Soch Apni, Faisla Aapka · Two creators, one production desk</p>
+  </div>
+  <button class="danger" id="logoutButton">Logout</button>
 </header>
 
 <main>
 
 <section class="card">
-<h2>Creator DNA & Project Setup</h2>
-<p class="muted">
-ये प्रोफाइल तुम्हारी हर Agent instruction में शामिल होगी।
-PIN और database deployment के बाद shared cloud sync चालू होगा।
-</p>
+  <h2>Creator DNA & Project Setup</h2>
+  <p class="muted">यह shared profile दोनों भाइयों के लिए इस्तेमाल होगी।</p>
 
-<label>Shared Project PIN (दोनों भाइयों के लिए एक)</label>
-<input id="pin" type="password" placeholder="अपना secret PIN डालें">
+  <label>Creator Voice / भाषा</label>
+  <textarea id="voice">सरल बोलचाल वाली हिंदी, हल्का UP/desi touch। बातचीत स्वाभाविक हो, टीवी एंकर जैसी नहीं। दो भाइयों की अलग राय हो सकती है, लेकिन नकली बहस नहीं।</textarea>
 
-<label>Creator voice / भाषा</label>
-<textarea id="voice">सरल बोलचाल वाली हिंदी, हल्का UP/desi touch। बातचीत स्वाभाविक हो, टीवी एंकर जैसी नहीं। दो भाइयों की अलग राय हो सकती है, लेकिन नकली बहस नहीं।</textarea>
+  <label>Channel Reference URLs (हर लाइन में एक URL)</label>
+  <textarea id="channels" placeholder="https://www.youtube.com/@channelname"></textarea>
 
-<label>Channel reference URLs (हर लाइन में एक YouTube URL)</label>
-<textarea id="channels" placeholder="https://www.youtube.com/@channelname"></textarea>
-
-<div class="row">
-<button id="save">Cloud profile save करें</button>
-<span id="status" class="status"></span>
-</div>
+  <div class="row">
+    <button id="saveProfile">Cloud Profile Save</button>
+    <span id="profileStatus" class="status"></span>
+  </div>
 </section>
 
 <section class="card">
-<h2>Agent चुनें</h2>
-<p class="muted">एक Agent चुनो, विषय लिखो और तैयार निर्देश बनाओ।</p>
-<div id="agents" class="grid"></div>
+  <h2>AI Manager · नया Project</h2>
+  <p class="muted">एक विषय दो। AI Manager काम के अनुसार specialist Agents चुनेगा और उनका output क्रम से सेव करेगा।</p>
+
+  <label>वीडियो का विषय / Project Topic</label>
+  <textarea id="topic" placeholder="उदाहरण: भारत में बेरोजगारी के आंकड़ों को आम युवा कैसे समझे?"></textarea>
+
+  <label>विशेष निर्देश / अतिरिक्त संदर्भ</label>
+  <textarea id="extra" placeholder="वीडियो की अवधि, दोनों भाइयों की राय, उपलब्ध स्रोत, reference URLs आदि।"></textarea>
+
+  <div class="row" style="margin-top:12px">
+    <button id="startWorkflow">AI Manager से काम शुरू करें</button>
+  </div>
+  <p id="workflowStatus" class="status"></p>
+</section>
+
+<section id="workflowCard" class="card hidden">
+  <h2>Workflow Progress</h2>
+  <p id="workflowInfo" class="muted"></p>
+
+  <div class="progress"><div id="progressBar"></div></div>
+  <p id="progressText" class="muted"></p>
+
+  <div id="stepList"></div>
+
+  <div class="row" style="margin-top:12px">
+    <button id="resumeWorkflow" class="hidden">Resume Workflow</button>
+    <button id="refreshWorkflow" class="secondary">Refresh Status</button>
+  </div>
+
+  <h3>Agent Outputs</h3>
+  <div id="workflowOutputs"></div>
 </section>
 
 <section class="card">
-<h2>काम शुरू करें</h2>
+  <h2>Specialist Agents · Manual Mode</h2>
+  <p class="muted">किसी एक Agent को सीधे भी काम दे सकते हो।</p>
+  <div id="agents" class="grid"></div>
 
-<label>आज का विषय / वीडियो आइडिया</label>
-<textarea id="topic" placeholder="उदाहरण: रोजगार के आंकड़ों को आम युवा कैसे समझे?"></textarea>
+  <label>विषय / काम</label>
+  <textarea id="manualTopic" placeholder="Agent को क्या काम देना है?"></textarea>
 
-<label>विशेष निर्देश / संदर्भ (वैकल्पिक)</label>
-<textarea id="extra" placeholder="Target audience, duration, दोनों भाइयों की राय, reference video URLs..."></textarea>
+  <label>अतिरिक्त निर्देश</label>
+  <textarea id="manualExtra" placeholder="वैकल्पिक"></textarea>
 
-<div class="row">
-<button id="make">Agent Prompt बनाएं</button>
-<button class="secondary" id="copy">कॉपी करें</button>
-<button class="secondary" id="open">AI Chat खोलें</button>
-</div>
+  <div class="row" style="margin-top:12px">
+    <button id="manualSend">Selected Agent से जवाब लें</button>
+  </div>
+
+  <p id="manualStatus" class="status"></p>
+  <div id="manualAnswer" class="output">Agent का जवाब यहां दिखाई देगा।</div>
+  <button id="copyManual" class="secondary" style="margin-top:10px">जवाब Copy करें</button>
 </section>
 
 <section class="card">
-<h2>Generated Agent Brief</h2>
-<div id="output" class="muted">Agent चुनकर विषय लिखें। यहां पूरा काम करने वाला prompt बनेगा।</div>
+  <h2>Project History</h2>
+  <p class="muted">दोनों भाइयों के shared projects यहां दिखाई देंगे।</p>
+  <button id="refreshProjects" class="secondary">History Refresh करें</button>
+  <div id="projectList"></div>
 </section>
 
 <section class="card">
-<h2>Apna Nazariya AI Chat</h2>
-<p class="muted">अब सीधे अपने Dashboard से AI को काम दे सकते हो।</p>
-
-<label>अपना सवाल या काम लिखें</label>
-<textarea id="aiPrompt" placeholder="उदाहरण: रोजगार के मुद्दे पर दो भाइयों की 5 मिनट की चर्चा की स्क्रिप्ट बनाओ।"></textarea>
-
-<div class="row">
-<button id="aiSend">AI से जवाब लें</button>
-<button class="secondary" id="useBrief">Generated Brief इस्तेमाल करें</button>
-</div>
-
-<p id="aiStatus" class="status"></p>
-
-<div id="aiAnswer" class="muted"></div>
-
-<div class="answer-actions">
-<button id="copyAnswer" disabled>📋 जवाब कॉपी करें</button>
-</div>
-
+  <h2>Selected Project Details</h2>
+  <div id="projectDetails" class="muted">History में किसी Project को खोलें।</div>
 </section>
 
 <section class="card">
-<h2>अभी की सीमाएं</h2>
-<p class="muted">
-यह शुरुआती मोबाइल Command Center है।
-AI जवाब Workers AI मॉडल की उपलब्धता और उसकी वर्तमान सीमाओं पर निर्भर करेंगे।
-यह अपने आप YouTube चैनल scrape नहीं करता।
-Analytics के लिए वास्तविक YouTube Studio data देना होगा।
-AI के जवाबों और citations की इंसानी जाँच जरूरी है।
-</p>
+  <h2>जरूरी सीमाएं</h2>
+  <p class="muted">
+    Workers AI अपने आप इंटरनेट या YouTube browse नहीं करता।
+    दिए गए URLs का खुलना या verify होना सुनिश्चित नहीं है।
+    बिना प्रमाण किसी claim को VERIFIED नहीं माना जाएगा।
+    वास्तविक Analytics के लिए YouTube Studio का data देना होगा।
+    AI outputs की इंसानी जाँच जरूरी है।
+    AI model की capacity और उपलब्धता सीमित हो सकती है।
+  </p>
 </section>
 
-<footer>Apna Nazariya AI · Open-source starter · Workers AI connected</footer>
+<footer>Apna Nazariya AI · Shared Creator Workspace</footer>
 
 </main>
+</div>
 
 <script>
-const agents=[
-["manager","AI Manager","काम को सही specialist तक भेजना और final quality review"],
-["trend","Trend Hunter","समय-संवेदनशील विषय और audience relevance"],
-["competitor","Competitor Intelligence","Reference channels के formats और audience patterns"],
-["fact","Research & Fact Check","Primary sources, claims, dates और evidence"],
-["script","Human Scriptwriter","दो भाइयों के लिए original natural Hindi script"],
-["hook","Hook & Retention","Opening, pacing और drop-off सुधार"],
-["title","Title Specialist","Curiosity, clarity और honest title options"],
-["thumbnail","Thumbnail Designer","Visual concepts, text और image prompts"],
-["seo","SEO Specialist","Description, chapters, keywords और pinned comment"],
-["shorts","Shorts Producer","Long-form से context-safe Shorts"],
-["live","Live Producer","Remote two-person live run-of-show"],
-["analytics","Analytics Specialist","YouTube Studio data का वास्तविक analysis"],
-["growth","Growth Strategist","अगले वीडियो और measurable improvements"]
+const $ = id => document.getElementById(id);
+
+const agents = [
+  ["manager","AI Manager","काम की योजना और specialist routing"],
+  ["trend","Trend Hunter","Topic relevance और trend analysis"],
+  ["competitor","Competitor Intelligence","Reference channels का विश्लेषण"],
+  ["fact","Research & Fact Check","Claims, evidence और sources"],
+  ["script","Human Scriptwriter","दो भाइयों की natural Hindi script"],
+  ["hook","Hook & Retention","Opening और audience retention"],
+  ["title","Title Specialist","YouTube titles"],
+  ["thumbnail","Thumbnail Designer","Thumbnail concepts और prompts"],
+  ["seo","SEO Specialist","Description, keywords और hashtags"],
+  ["shorts","Shorts Producer","Long video से Shorts"],
+  ["live","Live Producer","Two-host live show planning"],
+  ["analytics","Analytics Specialist","वास्तविक channel analytics"],
+  ["growth","Growth Strategist","Growth और weekly plan"]
 ];
 
-const instructions={
-manager:"You are the executive producer. Route this request through the relevant specialist steps, list missing inputs, enforce factual accuracy, and produce a complete review checklist. Do not claim work was performed without evidence.",
-trend:"Find current relevant topic opportunities. For each provide date, why now, audience relevance, source links, verification difficulty, risks, and a recommendation. Separate facts from speculation.",
-competitor:"Analyze only the supplied public YouTube channel/video URLs or provided transcripts/data. Compare topics, title structures, hooks, pacing, thumbnail patterns, comment questions and gaps. Do not invent views or copy scripts. State what could not be accessed.",
-fact:"Verify each factual claim using primary sources first: official documents, parliamentary records, datasets, original reports. Return claim, verdict, exact source URL, publisher, date, evidence and caveat. Label fact/allegation/opinion/inference. Never invent citations.",
-script:"Write an original natural Hindi two-brother conversation with light UP/desi touch. Avoid TV-anchor language and generic AI phrases. Include timestamps, speaker turns, facts with source notes, fair counterarguments, natural transitions and audience CTA. Do not manufacture disagreement or copy reference creators.",
-hook:"Create 5 truthful opening hooks. Improve first 30 seconds, pacing, curiosity loops and transitions. Flag repetition and any hook that overpromises.",
-title:"Create 12 title options, rank top 3 for clarity, curiosity and relevance. Avoid misleading clickbait and unsupported claims.",
-thumbnail:"Create 3 distinct mobile-readable thumbnail concepts: composition, expressions, background, 2-5 word text, contrast and image-generation prompt. Never depict fabricated evidence.",
-seo:"Prepare an accurate YouTube description, chapters, keywords, relevant hashtags, pinned comment and source links. No keyword stuffing.",
-shorts:"Identify 4-8 standalone clips from supplied transcript/timestamps. Provide in/out time, hook, caption, title and CTA. Preserve context and never distort speaker meaning.",
-live:"Create remote two-host run-of-show, speaker turns, timings, audience prompts, moderation and technical checklist for two Android phones. Include backup plan.",
-analytics:"Analyze only supplied YouTube Studio screenshots/CSV/metrics. Calculate comparisons where data permits. Never invent CTR, retention, views or subscriber counts. Give prioritized actions.",
-growth:"Use verified research and actual channel analytics to recommend next topics, packaging tests, publishing workflow and weekly goals. Distinguish evidence from hypotheses."
+const instructions = {
+  manager:"You are the executive producer. Plan the work, identify missing inputs, route the task to relevant specialists and review quality. Do not claim unperformed research.",
+  trend:"Analyze topic relevance, audience interest and verification difficulty. Do not invent live trends or dates.",
+  competitor:"Analyze only supplied URLs, transcripts and data. Do not invent views or analytics. Never copy scripts.",
+  fact:"List factual claims, evidence, exact supplied source URLs, dates, verdicts and missing verification. Never invent citations.",
+  script:"Write an original natural Hindi conversation between Host 1 and Host 2. Include strong hooks, realistic discussion, counterarguments, source notes and CTA. No fake debate.",
+  hook:"Create 5 truthful hooks. Improve first 30 seconds, pacing, curiosity and transitions.",
+  title:"Create 12 honest YouTube titles and rank the best 3.",
+  thumbnail:"Create 3 distinct mobile-readable thumbnail concepts with composition, expression, background, 2-5 word text and image prompts.",
+  seo:"Create accurate description, chapters, keywords, hashtags, pinned comment and source links.",
+  shorts:"Create standalone Shorts from supplied transcript. Give timestamps only when supplied.",
+  live:"Create a two Android phone live run-of-show, speaker turns, moderation and backup checklist.",
+  analytics:"Analyze only supplied real YouTube Studio metrics. Never invent views, CTR or retention.",
+  growth:"Create a practical weekly growth plan. Separate evidence from assumptions."
 };
 
-let selected="script";
-const agentBox=document.getElementById("agents");
-const $=id=>document.getElementById(id);
+let selectedAgent = "script";
+let currentJobId = "";
+let currentProjectId = "";
+let workflowBusy = false;
 
-agents.forEach(([id,name,desc])=>{
- let d=document.createElement("div");
- d.className="agent"+(id===selected?" active":"");
- d.innerHTML=`<b>${name}</b><small>${desc}</small>`;
- d.onclick=()=>{
-  selected=id;
-  document.querySelectorAll(".agent").forEach(x=>x.classList.remove("active"));
-  d.classList.add("active");
- };
- agentBox.appendChild(d);
+function escapeHTML(value){
+  return String(value ?? "").replace(/[&<>"']/g, ch => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#039;"
+  })[ch]);
+}
+
+async function api(path, options = {}){
+  const response = await fetch(path, {
+    ...options,
+    credentials:"same-origin",
+    headers:{
+      ...(options.headers || {}),
+      ...(options.body ? {"Content-Type":"application/json"} : {})
+    }
+  });
+
+  let data;
+  try{
+    data = await response.json();
+  }catch{
+    throw new Error("Server ने valid JSON जवाब नहीं दिया।");
+  }
+
+  if(!response.ok || data.ok === false){
+    throw new Error(data.details || data.error || `Request failed (${response.status})`);
+  }
+
+  return data;
+}
+
+function setStatus(id, message, isError = false){
+  $(id).textContent = message;
+  $(id).classList.toggle("error", isError);
+}
+
+function showApp(){
+  $("loginScreen").classList.add("hidden");
+  $("app").classList.remove("hidden");
+}
+
+function showLogin(){
+  $("app").classList.add("hidden");
+  $("loginScreen").classList.remove("hidden");
+}
+
+async function checkLogin(){
+  try{
+    const data = await api("/api/me");
+    if(data.authenticated){
+      showApp();
+      await loadDashboard();
+    }else{
+      showLogin();
+    }
+  }catch{
+    showLogin();
+  }
+}
+
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const button = $("loginButton");
+  button.disabled = true;
+  setStatus("loginStatus","Login हो रहा है...");
+
+  try{
+    await api("/api/login",{
+      method:"POST",
+      body:JSON.stringify({
+        loginId:$("loginId").value.trim(),
+        password:$("loginPassword").value
+      })
+    });
+
+    $("loginPassword").value = "";
+    setStatus("loginStatus","Login सफल!");
+    showApp();
+    await loadDashboard();
+
+  }catch(error){
+    setStatus("loginStatus",error.message,true);
+  }finally{
+    button.disabled = false;
+  }
 });
 
-$("make").onclick=()=>{
- const a=agents.find(x=>x[0]===selected);
- const topic=$("topic").value.trim();
+$("logoutButton").onclick = async () => {
+  if(!confirm("क्या इस फोन से Logout करना है?")) return;
 
- if(!topic){
-  $("output").textContent="पहले विषय लिखें।";
-  return;
- }
+  try{
+    await api("/api/logout",{method:"POST"});
+    currentJobId = "";
+    currentProjectId = "";
+    showLogin();
+  }catch(error){
+    alert(error.message);
+  }
+};
 
- const refs=$("channels").value.trim()||"अभी कोई reference channel URL नहीं दिया गया।";
+async function loadProfile(){
+  const data = await api("/api/profile");
 
- const prompt=`PROJECT: APNA NAZARIYA
-BRAND: Soch Apni, Faisla Aapka
-CREATOR VOICE: ${$("voice").value}
+  $("voice").value = data.voice || "";
+  $("channels").value = (data.channels || [])
+    .map(x => x.url).join("\n");
+}
+
+$("saveProfile").onclick = async () => {
+  try{
+    setStatus("profileStatus","Profile save हो रही है...");
+
+    await api("/api/profile",{
+      method:"POST",
+      body:JSON.stringify({
+        voice:$("voice").value,
+        channels:$("channels").value
+          .split("\n").map(x=>x.trim()).filter(Boolean),
+        replaceChannels:false
+      })
+    });
+
+    setStatus("profileStatus","✓ Cloud profile saved");
+  }catch(error){
+    setStatus("profileStatus",error.message,true);
+  }
+};
+
+function renderAgents(){
+  const box = $("agents");
+  box.innerHTML = "";
+
+  agents.forEach(([id,name,desc]) => {
+    const div = document.createElement("div");
+    div.className = "agent" + (id === selectedAgent ? " active" : "");
+    div.innerHTML = `<b>${escapeHTML(name)}</b><small>${escapeHTML(desc)}</small>`;
+
+    div.onclick = () => {
+      selectedAgent = id;
+      renderAgents();
+    };
+
+    box.appendChild(div);
+  });
+}
+
+async function loadDashboard(){
+  try{
+    await loadProfile();
+  }catch(error){
+    setStatus("profileStatus",error.message,true);
+  }
+
+  renderAgents();
+  await loadProjects();
+}
+
+function renderSteps(steps){
+  const box = $("stepList");
+  box.innerHTML = "";
+
+  const completed = steps.filter(x=>x.status==="completed").length;
+  const total = steps.length;
+  const percentage = total ? Math.round(completed/total*100) : 0;
+
+  $("progressBar").style.width = percentage + "%";
+  $("progressText").textContent = `${completed} / ${total} Agents completed (${percentage}%)`;
+
+  steps.forEach(step => {
+    const row = document.createElement("div");
+    row.className = "step";
+
+    const status = step.status || "queued";
+    row.innerHTML = `
+      <span>${escapeHTML(step.agent_name)}</span>
+      <span class="pill ${escapeHTML(status)}">${escapeHTML(status)}</span>
+    `;
+
+    box.appendChild(row);
+  });
+}
+
+function appendWorkflowOutput(agent, answer){
+  const box = $("workflowOutputs");
+  const section = document.createElement("div");
+  section.className = "project";
+
+  section.innerHTML = `
+    <b>${escapeHTML(agent)}</b>
+    <div class="output">${escapeHTML(answer)}</div>
+  `;
+
+  box.appendChild(section);
+}
+
+async function refreshWorkflow(){
+  if(!currentJobId) return;
+
+  const data = await api(
+    "/api/workflow/status?jobId="+encodeURIComponent(currentJobId)
+  );
+
+  $("workflowCard").classList.remove("hidden");
+  $("workflowInfo").textContent =
+    `Project: ${currentProjectId} · Status: ${data.job.status}`;
+
+  renderSteps(data.steps || []);
+
+  const paused = data.job.status === "paused";
+  $("resumeWorkflow").classList.toggle("hidden",!paused);
+
+  return data;
+}
+
+async function runWorkflow(){
+  if(workflowBusy || !currentJobId) return;
+
+  workflowBusy = true;
+  $("startWorkflow").disabled = true;
+  $("resumeWorkflow").disabled = true;
+
+  try{
+    $("workflowCard").classList.remove("hidden");
+
+    for(let i=0;i<20;i++){
+      const status = await refreshWorkflow();
+
+      if(status.job.status === "completed"){
+        setStatus("workflowStatus","✓ पूरा Workflow सफलतापूर्वक समाप्त हुआ!");
+        await loadProjects();
+        await loadProjectDetails(currentProjectId);
+        break;
+      }
+
+      if(status.job.status === "paused"){
+        setStatus("workflowStatus","Workflow रुका हुआ है। Resume दबाकर फिर जारी कर सकते हो।",true);
+        break;
+      }
+
+      const result = await api("/api/workflow/step",{
+        method:"POST",
+        body:JSON.stringify({jobId:currentJobId})
+      });
+
+      if(result.agent && result.answer){
+        appendWorkflowOutput(result.agent,result.answer);
+      }
+
+      if(result.done){
+        setStatus("workflowStatus","✓ सभी Agent steps पूरे हो गए!");
+        await refreshWorkflow();
+        await loadProjects();
+        await loadProjectDetails(currentProjectId);
+        break;
+      }
+
+      setStatus("workflowStatus",
+        result.agent ? `${result.agent} पूरा हुआ। अगला Agent शुरू होगा...` :
+        "Workflow चल रहा है...");
+    }
+
+  }catch(error){
+    setStatus("workflowStatus",error.message,true);
+    try{await refreshWorkflow();}catch{}
+  }finally{
+    workflowBusy = false;
+    $("startWorkflow").disabled = false;
+    $("resumeWorkflow").disabled = false;
+  }
+}
+
+$("startWorkflow").onclick = async () => {
+  const topic = $("topic").value.trim();
+  if(!topic){
+    setStatus("workflowStatus","पहले विषय लिखें।",true);
+    return;
+  }
+
+  if(workflowBusy) return;
+
+  $("startWorkflow").disabled = true;
+  setStatus("workflowStatus","AI Manager Project बना रहा है...");
+
+  try{
+    const data = await api("/api/workflow/start",{
+      method:"POST",
+      body:JSON.stringify({
+        topic,
+        extra:$("extra").value,
+        voice:$("voice").value,
+        channels:$("channels").value
+          .split("\n").map(x=>x.trim()).filter(Boolean)
+      })
+    });
+
+    currentJobId = data.jobId;
+    currentProjectId = data.projectId;
+
+    $("workflowOutputs").innerHTML = "";
+    $("workflowCard").classList.remove("hidden");
+
+    setStatus("workflowStatus",
+      `Project तैयार। ${data.totalSteps} Agent steps निर्धारित हुए।`);
+
+    await runWorkflow();
+
+  }catch(error){
+    setStatus("workflowStatus",error.message,true);
+    $("startWorkflow").disabled = false;
+  }
+};
+
+$("resumeWorkflow").onclick = async () => {
+  if(!currentJobId) return;
+
+  try{
+    await api("/api/workflow/resume",{
+      method:"POST",
+      body:JSON.stringify({jobId:currentJobId})
+    });
+
+    setStatus("workflowStatus","Workflow फिर शुरू हो रहा है...");
+    await runWorkflow();
+
+  }catch(error){
+    setStatus("workflowStatus",error.message,true);
+  }
+};
+
+$("refreshWorkflow").onclick = async () => {
+  try{
+    await refreshWorkflow();
+    setStatus("workflowStatus","Status refresh हो गया।");
+  }catch(error){
+    setStatus("workflowStatus",error.message,true);
+  }
+};
+
+$("manualSend").onclick = async () => {
+  const topic = $("manualTopic").value.trim();
+  if(!topic){
+    setStatus("manualStatus","पहले अपना काम लिखें।",true);
+    return;
+  }
+
+  const agent = agents.find(x=>x[0]===selectedAgent);
+  const voice = $("voice").value;
+  const channels = $("channels").value;
+
+  const prompt = `
+PROJECT: APNA NAZARIYA
+CREATOR VOICE:
+${voice}
+
 REFERENCE CHANNELS:
-${refs}
+${channels}
 
-SELECTED AGENT: ${a[1]}
-ROLE INSTRUCTION: ${instructions[selected]}
+SELECTED AGENT: ${agent[1]}
+ROLE INSTRUCTION:
+${instructions[selectedAgent]}
 
 TOPIC:
 ${topic}
 
 ADDITIONAL CONTEXT:
-${$("extra").value||"कोई अतिरिक्त निर्देश नहीं।"}
+${$("manualExtra").value}
 
-MANDATORY RULES:
-- Natural conversational Hindi; two real brothers, not TV anchors.
-- Original work only; learn patterns, never copy another creator.
-- Verify current/political claims and cite source URLs with dates.
-- Clearly label facts, allegations, opinions and uncertainty.
-- Never invent channel analytics or claim inaccessible channel research.
-- Ask for missing evidence instead of guessing.
-- Output must be practical and ready for human review.`;
+RULES:
+- Natural conversational Hindi.
+- Do not invent facts, sources or analytics.
+- Separate fact, allegation, opinion and assumption.
+- Clearly mention missing evidence.
+`;
 
- $("output").textContent=prompt;
+  const button = $("manualSend");
+  button.disabled = true;
+  $("manualAnswer").textContent = "";
+  setStatus("manualStatus","AI जवाब तैयार कर रहा है...");
+
+  try{
+    const data = await api("/api/ai",{
+      method:"POST",
+      body:JSON.stringify({prompt})
+    });
+
+    $("manualAnswer").textContent = data.answer || "";
+    setStatus("manualStatus",`${data.agent || agent[1]} का जवाब मिल गया!`);
+
+  }catch(error){
+    setStatus("manualStatus",error.message,true);
+  }finally{
+    button.disabled = false;
+  }
 };
 
-$("copy").onclick=async()=>{
- try{
-  await navigator.clipboard.writeText($("output").textContent);
-  $("status").textContent="Prompt copied";
- }catch(e){
-  $("status").textContent="Text select करके copy करें";
- }
-};
+$("copyManual").onclick = async () => {
+  const answer = $("manualAnswer").textContent;
 
-$("open").onclick=()=>{
- window.open("https://chatgpt.com/","_blank");
-};
-
-$("save").onclick=async()=>{
- const pin=$("pin").value.trim();
- if(!pin){
-  $("status").textContent="पहले PIN डालें";
-  return;
- }
-
- try{
-  const r=await fetch("/api/profile",{
-   method:"POST",
-   headers:{
-    "Content-Type":"application/json",
-    "X-Project-PIN":pin
-   },
-   body:JSON.stringify({
-    voice:$("voice").value,
-    channels:$("channels").value.split("\n").map(x=>x.trim()).filter(Boolean)
-   })
-  });
-
-  const j=await r.json();
-  $("status").textContent=j.ok?"Cloud profile saved":"Save failed: "+(j.error||r.status);
-
- }catch(e){
-  $("status").textContent="Cloud API connection failed";
- }
-};
-
-// Generated Brief को AI Chat में भेजने के लिए
-$("useBrief").onclick=()=>{
- const brief=$("output").textContent.trim();
-
- if(!brief || brief.startsWith("Agent चुनकर")){
-  $("aiStatus").textContent="पहले Agent Prompt बनाएं।";
-  return;
- }
-
- $("aiPrompt").value=brief;
- $("aiStatus").textContent="Brief तैयार है। अब AI से जवाब लें।";
-};
-
-// AI जवाब कॉपी करने का फीचर
-$("copyAnswer").onclick=async()=>{
- const answer=$("aiAnswer").textContent.trim();
-
- if(!answer){
-  $("aiStatus").textContent="कॉपी करने के लिए कोई जवाब नहीं है।";
-  return;
- }
-
- const btn=$("copyAnswer");
-
- try{
-  if(navigator.clipboard && window.isSecureContext){
-   await navigator.clipboard.writeText(answer);
-  }else{
-   const temp=document.createElement("textarea");
-   temp.value=answer;
-   temp.style.position="fixed";
-   temp.style.opacity="0";
-   document.body.appendChild(temp);
-   temp.focus();
-   temp.select();
-
-   const copied=document.execCommand("copy");
-   temp.remove();
-
-   if(!copied) throw new Error("Copy failed");
+  if(!answer.trim()){
+    alert("कॉपी करने के लिए जवाब नहीं है।");
+    return;
   }
 
-  btn.textContent="✓ Copied!";
-  btn.classList.add("copied");
-  $("aiStatus").textContent="पूरा AI जवाब कॉपी हो गया!";
-
-  setTimeout(()=>{
-   btn.textContent="📋 जवाब कॉपी करें";
-   btn.classList.remove("copied");
-  },2000);
-
- }catch(e){
-  $("aiStatus").textContent="कॉपी नहीं हुआ। दोबारा कोशिश करें।";
- }
+  try{
+    await navigator.clipboard.writeText(answer);
+    alert("जवाब Copy हो गया!");
+  }catch{
+    alert("Copy नहीं हुआ। जवाब को Select करके Copy करें।");
+  }
 };
 
-// वास्तविक Workers AI API कनेक्शन
-$("aiSend").onclick=async()=>{
- const pin=$("pin").value.trim();
- const prompt=$("aiPrompt").value.trim();
+async function loadProjects(){
+  try{
+    const data = await api("/api/projects");
+    const box = $("projectList");
+    box.innerHTML = "";
 
- if(!pin){
-  $("aiStatus").textContent="पहले अपना Project PIN डालें।";
-  return;
- }
+    if(!data.projects.length){
+      box.textContent = "अभी कोई Project नहीं है।";
+      box.className = "muted";
+      return;
+    }
 
- if(!prompt){
-  $("aiStatus").textContent="पहले अपना सवाल लिखें।";
-  return;
- }
+    box.className = "";
 
- $("aiSend").disabled=true;
- $("copyAnswer").disabled=true;
- $("aiStatus").textContent="AI जवाब तैयार कर रहा है...";
- $("aiAnswer").textContent="";
- $("copyAnswer").textContent="📋 जवाब कॉपी करें";
- $("copyAnswer").classList.remove("copied");
+    data.projects.forEach(project => {
+      const div = document.createElement("div");
+      div.className = "project";
 
- try{
-  const r=await fetch("/api/ai",{
-   method:"POST",
-   headers:{
-    "Content-Type":"application/json",
-    "X-Project-PIN":pin
-   },
-   body:JSON.stringify({prompt})
-  });
+      div.innerHTML = `
+        <b>${escapeHTML(project.title)}</b>
+        <p class="muted">${escapeHTML(project.status)} · ${escapeHTML(project.updated_at)}</p>
+        <button class="secondary" data-project="${escapeHTML(project.id)}">Project खोलें</button>
+      `;
 
-  const data=await r.json();
+      div.querySelector("button").onclick = () => {
+        loadProjectDetails(project.id);
+      };
 
-  if(!r.ok || !data.ok){
-   throw new Error(data.details||data.error||"AI request failed");
+      box.appendChild(div);
+    });
+
+  }catch(error){
+    $("projectList").textContent = error.message;
   }
+}
 
-  $("aiAnswer").textContent=data.answer||"AI से खाली जवाब मिला।";
-  $("aiStatus").textContent="जवाब मिल गया!";
+async function loadProjectDetails(projectId){
+  try{
+    const data = await api(
+      "/api/projects/"+encodeURIComponent(projectId)
+    );
 
-  if(data.answer && data.answer.trim()){
-   $("copyAnswer").disabled=false;
+    const box = $("projectDetails");
+    box.innerHTML = `
+      <h3>${escapeHTML(data.project.title)}</h3>
+      <p>${escapeHTML(data.project.topic)}</p>
+      <p class="muted">Status: ${escapeHTML(data.project.status)}</p>
+      <h3>Saved Agent Outputs</h3>
+    `;
+
+    (data.outputs || []).forEach(output => {
+      const section = document.createElement("div");
+      section.className = "project";
+      section.innerHTML = `
+        <b>${escapeHTML(output.title || output.output_type)}</b>
+        <div class="output">${escapeHTML(output.content)}</div>
+      `;
+      box.appendChild(section);
+    });
+
+    const latestJob = (data.jobs || [])[0];
+
+    if(latestJob){
+      currentProjectId = projectId;
+      currentJobId = latestJob.id;
+      $("workflowCard").classList.remove("hidden");
+      await refreshWorkflow();
+    }
+
+  }catch(error){
+    $("projectDetails").textContent = error.message;
   }
+}
 
- }catch(e){
-  $("aiStatus").textContent="समस्या: "+e.message;
- }finally{
-  $("aiSend").disabled=false;
- }
-};
+$("refreshProjects").onclick = loadProjects;
 
 if("serviceWorker" in navigator){
- navigator.serviceWorker.register("/sw.js").catch(()=>{});
+  navigator.serviceWorker.register("/sw.js").catch(()=>{});
 }
+
+checkLogin();
 </script>
 
 </body>
