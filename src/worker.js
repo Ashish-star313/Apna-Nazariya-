@@ -179,6 +179,71 @@ async function ensureSchema(env) {
   }
   await env.DB.prepare(`UPDATE workflow_jobs SET input_json='{}' WHERE input_json IS NULL OR input_json=''`).run();
   await env.DB.prepare(`UPDATE workflow_jobs SET created_at=COALESCE(created_at,CURRENT_TIMESTAMP), updated_at=COALESCE(updated_at,CURRENT_TIMESTAMP)`).run();
+
+  // agent_runs: support both the legacy schema (output_text/error_message)
+  // and the current Worker schema (output/error). Never drop or rename columns.
+  const aInfo = await env.DB.prepare("PRAGMA table_info(agent_runs)").all();
+  const aCols = new Set((aInfo.results || []).map(c => c.name));
+  const aMigrations = [
+    ["job_id", "TEXT"],
+    ["project_id", "TEXT"],
+    ["agent_name", "TEXT"],
+    ["status", "TEXT NOT NULL DEFAULT 'queued'"],
+    ["output", "TEXT"],
+    ["error", "TEXT"],
+    ["created_at", "TEXT"],
+    ["updated_at", "TEXT"]
+  ];
+  for (const [col, def] of aMigrations) {
+    if (!aCols.has(col)) {
+      await env.DB.prepare(`ALTER TABLE agent_runs ADD COLUMN ${col} ${def}`).run();
+      aCols.add(col);
+    }
+  }
+  if (aCols.has("output_text")) {
+    await env.DB.prepare("UPDATE agent_runs SET output=COALESCE(output,output_text) WHERE output IS NULL").run();
+  }
+  if (aCols.has("error_message")) {
+    await env.DB.prepare("UPDATE agent_runs SET error=COALESCE(error,error_message) WHERE error IS NULL").run();
+  }
+  if (aCols.has("started_at")) {
+    await env.DB.prepare("UPDATE agent_runs SET updated_at=COALESCE(updated_at,completed_at,started_at,created_at)").run();
+  } else {
+    await env.DB.prepare("UPDATE agent_runs SET updated_at=COALESCE(updated_at,created_at)").run();
+  }
+  await env.DB.prepare(`
+    UPDATE agent_runs
+    SET project_id = COALESCE(project_id, (
+      SELECT workflow_jobs.project_id FROM workflow_jobs
+      WHERE workflow_jobs.id = agent_runs.job_id
+    ))
+    WHERE project_id IS NULL
+  `).run();
+
+  // project_outputs: existing installations may require output_type and use
+  // title/job_id while older Worker code expects agent_name. Add missing fields.
+  const oInfo = await env.DB.prepare("PRAGMA table_info(project_outputs)").all();
+  const oCols = new Set((oInfo.results || []).map(c => c.name));
+  const oMigrations = [
+    ["project_id", "TEXT"],
+    ["job_id", "TEXT"],
+    ["output_type", "TEXT NOT NULL DEFAULT 'agent_output'"],
+    ["title", "TEXT"],
+    ["agent_name", "TEXT"],
+    ["content", "TEXT"],
+    ["created_at", "TEXT"]
+  ];
+  for (const [col, def] of oMigrations) {
+    if (!oCols.has(col)) {
+      await env.DB.prepare(`ALTER TABLE project_outputs ADD COLUMN ${col} ${def}`).run();
+      oCols.add(col);
+    }
+  }
+  if (oCols.has("title")) {
+    await env.DB.prepare("UPDATE project_outputs SET agent_name=COALESCE(NULLIF(agent_name,''),title) WHERE agent_name IS NULL OR agent_name=''").run();
+  }
+  await env.DB.prepare("UPDATE project_outputs SET output_type=COALESCE(NULLIF(output_type,''),'agent_output') WHERE output_type IS NULL OR output_type=''").run();
+  await env.DB.prepare("UPDATE project_outputs SET created_at=COALESCE(created_at,CURRENT_TIMESTAMP)").run();
 }
 
 /* AUTHENTICATION */
@@ -401,7 +466,10 @@ async function runNextStep(env, jobId) {
     const timestamp = now();
 
     await env.DB.prepare("UPDATE agent_runs SET status='completed',output=?,updated_at=? WHERE id=?").bind(output, timestamp, next.id).run();
-    await env.DB.prepare("INSERT INTO project_outputs (id,project_id,agent_name,content,created_at) VALUES (?,?,?,?,?)").bind(uuid(), job.project_id, next.agent_name, output, timestamp).run();
+    await env.DB.prepare(`INSERT INTO project_outputs
+      (id,project_id,job_id,output_type,title,agent_name,content,created_at)
+      VALUES (?,?,?,?,?,?,?,?)`)
+      .bind(uuid(), job.project_id, jobId, "agent_output", next.agent_name, next.agent_name, output, timestamp).run();
 
     const counts = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status='completed'").bind(jobId).first();
     const pending = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status IN ('queued','running')").bind(jobId).first();
@@ -471,7 +539,7 @@ async function generateThumbnail(env, body) {
 /* API ROUTES */
 async function handleApi(request, env) {
   const url = new URL(request.url), path = url.pathname, method = request.method;
-  if (path === "/api/health" && method === "GET") return json({ ok: true, service: "Apna Nazariya AI API", version: "6.2" });
+  if (path === "/api/health" && method === "GET") return json({ ok: true, service: "Apna Nazariya AI API", version: "6.3" });
   if (path === "/api/secret-check" && method === "GET") return json({
     ok: true, appLoginIdConfigured: Boolean(env.APP_LOGIN_ID),
     appLoginPasswordConfigured: Boolean(env.APP_LOGIN_PASSWORD),
