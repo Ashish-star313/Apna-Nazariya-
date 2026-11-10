@@ -123,7 +123,7 @@ async function ensureSchema(env) {
     `CREATE TABLE IF NOT EXISTS login_sessions (token_hash TEXT PRIMARY KEY, expires_at TEXT NOT NULL)`,
     `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
     `CREATE TABLE IF NOT EXISTS channels (id TEXT PRIMARY KEY, url TEXT)`,
-    `CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, topic TEXT, status TEXT, created_at TEXT, updated_at TEXT, input_json TEXT)`,
+    `CREATE TABLE IF NOT EXISTS projects (id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', topic TEXT NOT NULL DEFAULT '', status TEXT, created_at TEXT, updated_at TEXT, input_json TEXT)`,
     `CREATE TABLE IF NOT EXISTS workflow_jobs (id TEXT PRIMARY KEY, project_id TEXT, status TEXT, current_step INTEGER DEFAULT 0, total_steps INTEGER DEFAULT 0, error TEXT, created_at TEXT, updated_at TEXT)`,
     `CREATE TABLE IF NOT EXISTS agent_runs (id TEXT PRIMARY KEY, job_id TEXT, project_id TEXT, agent_name TEXT, status TEXT, output TEXT, error TEXT, created_at TEXT, updated_at TEXT)`,
     `CREATE TABLE IF NOT EXISTS project_outputs (id TEXT PRIMARY KEY, project_id TEXT, agent_name TEXT, content TEXT, created_at TEXT)`
