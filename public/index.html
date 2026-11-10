@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="hi">
 <head>
@@ -8,268 +7,89 @@
 <meta name="description" content="Apna Nazariya AI Production Studio">
 <link rel="manifest" href="/manifest.webmanifest">
 <title>Apna Nazariya Studio</title>
-
 <style>
-:root{
-  color-scheme:dark;
-  --bg:#101114;
-  --surface:#191b20;
-  --surface2:#20232a;
-  --surface3:#262a32;
-  --line:#30343d;
-  --text:#f4f1eb;
-  --muted:#a4a6ad;
-  --gold:#e9aa45;
-  --gold2:#ffd18a;
-  --green:#58c99a;
-  --red:#f07878;
-  --blue:#83a9e9;
-  --radius:17px;
-}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;background:var(--bg);color:var(--text);
-  font:15px system-ui,-apple-system,sans-serif;
-}
-button,input,textarea,select{font:inherit}
-button{cursor:pointer;transition:.18s}
-button:disabled{opacity:.45;cursor:not-allowed}
-.hidden{display:none!important}
-.muted{color:var(--muted);font-size:13px;line-height:1.65}
-.error{color:var(--red)!important}
-.status{font-size:13px;color:var(--green);white-space:pre-wrap;line-height:1.6}
-a{color:var(--gold)}
-.brand-mark{
-  width:43px;height:43px;border-radius:14px;
-  display:grid;place-items:center;
-  background:linear-gradient(145deg,#f5c16d,#bd7926);
-  color:#21170a;font-size:22px;font-weight:900;
-  box-shadow:0 5px 20px #d99b3b25;
-}
-header{
-  position:sticky;top:0;z-index:20;
-  background:#121317ed;backdrop-filter:blur(18px);
-  border-bottom:1px solid var(--line);
-}
-.header-inner{
-  max-width:1160px;margin:auto;padding:13px 19px;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-}
-.brand{display:flex;align-items:center;gap:11px;min-width:0}
-.brand h1{font-size:18px;letter-spacing:-.4px;margin:0}
-.brand p{font-size:11px;color:var(--muted);margin:3px 0 0}
-.header-right{display:flex;align-items:center;gap:9px}
-.online-dot{
-  width:7px;height:7px;background:var(--green);
-  border-radius:50%;display:inline-block;margin-right:5px;
-}
+:root{color-scheme:dark;--bg:#101114;--surface:#191b20;--surface2:#20232a;--line:#30343d;--text:#f4f1eb;--muted:#a4a6ad;--gold:#e9aa45;--gold2:#ffd18a;--green:#58c99a;--red:#f07878}
+*{box-sizing:border-box}html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--text);font:15px system-ui,-apple-system,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}
+.hidden{display:none!important}.muted{color:var(--muted);font-size:13px;line-height:1.65}
+.error{color:var(--red)!important}.status{font-size:13px;color:var(--green);white-space:pre-wrap;line-height:1.6}
+.brand-mark{width:43px;height:43px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(145deg,#f5c16d,#bd7926);color:#21170a;font-size:22px;font-weight:900}
+header{position:sticky;top:0;z-index:20;background:#121317ed;backdrop-filter:blur(18px);border-bottom:1px solid var(--line)}
+.header-inner{max-width:1160px;margin:auto;padding:13px 19px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:11px;min-width:0}.brand h1{font-size:18px;margin:0}.brand p{font-size:11px;color:var(--muted);margin:3px 0 0}
+.header-right{display:flex;align-items:center;gap:9px}.online-dot{width:7px;height:7px;background:var(--green);border-radius:50%;display:inline-block;margin-right:5px}
 main{max-width:1160px;margin:auto;padding:20px 18px 40px}
-.top-nav{
-  display:flex;gap:7px;overflow-x:auto;
-  padding:0 0 15px;margin-bottom:17px;
-  scrollbar-width:none;
-}
-.top-nav::-webkit-scrollbar{display:none}
-.nav-link{
-  flex:0 0 auto;text-decoration:none;
-  color:var(--muted);font-size:12px;
-  padding:9px 13px;border:1px solid var(--line);
-  border-radius:30px;background:var(--surface);
-}
-.nav-link:hover,.nav-link:focus{
-  color:var(--gold2);border-color:var(--gold);
-}
-.hero{
-  position:relative;overflow:hidden;
-  border:1px solid #55452d;border-radius:22px;
-  padding:25px;background:
-  radial-gradient(ellipse at 90% 0%,#9c6a292c,transparent 48%),
-  linear-gradient(120deg,#26231e,#1b1b1d 65%);
-  margin-bottom:17px;
-}
-.hero:after{
-  content:"";position:absolute;width:180px;height:180px;
-  right:-80px;bottom:-115px;border:1px solid #d5a04d35;
-  border-radius:50%;box-shadow:0 0 0 20px #d5a04d08,0 0 0 40px #d5a04d06;
-}
-.eyebrow{
-  color:var(--gold2);font-size:11px;font-weight:800;
-  letter-spacing:1.7px;text-transform:uppercase;
-}
-.hero h2{font-size:clamp(24px,4vw,34px);margin:10px 0 7px;letter-spacing:-1px}
-.hero p{color:#c1bdb5;max-width:600px;line-height:1.7;font-size:13px;margin:0}
-.hero-bottom{
-  display:flex;justify-content:space-between;align-items:center;
-  gap:12px;flex-wrap:wrap;margin-top:20px;
-}
-.hero-tag{
-  border:1px solid #66502e;border-radius:30px;
-  color:var(--gold2);padding:7px 11px;font-size:11px;
-}
-.card{
-  background:var(--surface);border:1px solid var(--line);
-  border-radius:var(--radius);padding:19px;margin-bottom:15px;
-  scroll-margin-top:100px;
-}
-.section-head{
-  display:flex;justify-content:space-between;
-  align-items:flex-start;gap:12px;margin-bottom:13px;
-}
-.section-title{font-size:17px;font-weight:800;margin:0;letter-spacing:-.3px}
-.section-sub{font-size:12px;color:var(--muted);margin:5px 0 0;line-height:1.6}
-.section-icon{
-  width:36px;height:36px;border-radius:11px;
-  display:grid;place-items:center;background:#33291d;
-  color:var(--gold2);font-size:17px;flex:0 0 auto;
-}
+.top-nav{display:flex;gap:7px;overflow-x:auto;padding:0 0 15px;margin-bottom:17px;scrollbar-width:none}
+.top-nav::-webkit-scrollbar{display:none}.nav-link{flex:0 0 auto;text-decoration:none;color:var(--muted);font-size:12px;padding:9px 13px;border:1px solid var(--line);border-radius:30px;background:var(--surface)}
+.nav-link:hover{color:var(--gold2);border-color:var(--gold)}
+.hero{position:relative;overflow:hidden;border:1px solid #55452d;border-radius:22px;padding:25px;background:radial-gradient(ellipse at 90% 0%,#9c6a292c,transparent 48%),linear-gradient(120deg,#26231e,#1b1b1d 65%);margin-bottom:17px}
+.eyebrow,.mini-label{color:var(--gold2);font-size:11px;font-weight:800;letter-spacing:1.4px}
+.hero h2{font-size:clamp(24px,4vw,34px);margin:10px 0 7px}.hero p{color:#c1bdb5;max-width:600px;line-height:1.7;font-size:13px;margin:0}
+.hero-bottom{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-top:20px}
+.hero-tag{border:1px solid #66502e;border-radius:30px;color:var(--gold2);padding:7px 11px;font-size:11px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:17px;padding:19px;margin-bottom:15px;scroll-margin-top:100px}
+.section-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:13px}
+.section-title{font-size:17px;font-weight:800;margin:0}.section-sub{font-size:12px;color:var(--muted);margin:5px 0 0;line-height:1.6}
+.section-icon{width:36px;height:36px;border-radius:11px;display:grid;place-items:center;background:#33291d;color:var(--gold2);font-size:17px;flex:0 0 auto}
 label{display:block;color:#d8d5ce;font-size:12px;font-weight:650;margin:14px 0 7px}
-input,textarea,select{
-  width:100%;padding:12px 13px;
-  border-radius:11px;border:1px solid var(--line);
-  background:#111318;color:var(--text);outline:none;
-}
-input:focus,textarea:focus,select:focus{
-  border-color:var(--gold);box-shadow:0 0 0 3px #e9aa4517;
-}
+input,textarea,select{width:100%;padding:12px 13px;border-radius:11px;border:1px solid var(--line);background:#111318;color:var(--text);outline:none}
+input:focus,textarea:focus,select:focus{border-color:var(--gold);box-shadow:0 0 0 3px #e9aa4517}
 textarea{min-height:94px;resize:vertical;line-height:1.6}
-button.primary{
-  background:var(--gold);color:#21170a;
-  border:1px solid var(--gold);font-weight:800;
-  padding:11px 16px;border-radius:11px;
-}
+button.primary{background:var(--gold);color:#21170a;border:1px solid var(--gold);font-weight:800;padding:11px 16px;border-radius:11px}
 button.primary:hover{background:var(--gold2)}
-button.secondary{
-  background:var(--surface3);color:var(--text);
-  border:1px solid #414651;padding:10px 14px;border-radius:11px;
-}
-button.ghost{
-  background:transparent;color:var(--muted);
-  border:1px solid var(--line);padding:9px 12px;border-radius:10px;
-}
-button.danger{
-  background:#49292b;color:#ffb9b9;
-  border:1px solid #754043;padding:9px 12px;border-radius:10px;
-}
-button.copy-button{
-  background:#173d32;color:#a9f0d0;
-  border:1px solid #28634e;padding:8px 11px;
-  border-radius:9px;font-size:12px;font-weight:700;
-}
+button.secondary{background:#262a32;color:var(--text);border:1px solid #414651;padding:10px 14px;border-radius:11px}
+button.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);padding:9px 12px;border-radius:10px}
+button.danger{background:#49292b;color:#ffb9b9;border:1px solid #754043;padding:9px 12px;border-radius:10px}
+button.copy-button{background:#173d32;color:#a9f0d0;border:1px solid #28634e;padding:8px 11px;border-radius:9px;font-size:12px;font-weight:700}
 .row{display:flex;gap:9px;align-items:center;flex-wrap:wrap}
-.grid{
-  display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));
-  gap:10px;
-}
-.agent{
-  background:#14161b;border:1px solid var(--line);
-  border-radius:13px;padding:13px;cursor:pointer;
-  transition:.18s;min-height:83px;
-}
-.agent:hover{border-color:#8b7048;transform:translateY(-1px)}
-.agent.active{
-  border-color:var(--gold);
-  background:linear-gradient(130deg,#33291d,#1a1b1e);
-  box-shadow:inset 0 0 0 1px #e9aa452d;
-}
-.agent b{display:block;font-size:13px;margin:0 0 5px}
-.agent small{font-size:11px;color:var(--muted);line-height:1.5}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:10px}
+.agent{background:#14161b;border:1px solid var(--line);border-radius:13px;padding:13px;cursor:pointer;min-height:83px}
+.agent:hover{border-color:#8b7048}.agent.active{border-color:var(--gold);background:linear-gradient(130deg,#33291d,#1a1b1e)}
+.agent b{display:block;font-size:13px;margin:0 0 5px}.agent small{font-size:11px;color:var(--muted);line-height:1.5}
 .agent .agent-icon{font-size:17px;margin-bottom:7px}
-.output{
-  white-space:pre-wrap;line-height:1.75;
-  overflow-wrap:anywhere;font-size:13px;
-  background:#111318;border:1px solid var(--line);
-  padding:14px;border-radius:11px;margin-top:10px;
-}
+.output{white-space:pre-wrap;line-height:1.75;overflow-wrap:anywhere;font-size:13px;background:#111318;border:1px solid var(--line);padding:14px;border-radius:11px;margin-top:10px}
 .output-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.project{
-  border:1px solid var(--line);background:#15171c;
-  border-radius:12px;padding:13px;margin:10px 0;
-}
-.step{
-  padding:12px 2px;border-bottom:1px solid var(--line);
-  display:flex;justify-content:space-between;align-items:center;
-  gap:10px;font-size:12px;
-}
-.pill{
-  font-size:10px;padding:5px 9px;border-radius:20px;
-  background:#30343d;color:#e5e7eb;white-space:nowrap;
-}
-.pill.completed{background:#164b37;color:#a8f0c9}
-.pill.running{background:#62451e;color:#ffe0a1}
-.pill.queued{background:#30343d}
-.pill.paused{background:#592d31;color:#ffc0c0}
-.progress{
-  height:7px;background:#30343d;border-radius:20px;
-  overflow:hidden;margin:13px 0;
-}
-.progress div{
-  height:100%;background:linear-gradient(90deg,#bd7926,#ffd18a);
-  width:0%;transition:width .3s;
-}
-.workflow-summary{
-  background:#14161b;border:1px solid var(--line);
-  border-radius:12px;padding:14px;margin:12px 0;
-}
-.workflow-summary strong{font-size:13px}
-.workflow-summary p{font-size:12px;color:var(--muted);margin:5px 0 0}
-.empty{
-  border:1px dashed #414651;border-radius:12px;
-  padding:20px;text-align:center;color:var(--muted);
-  font-size:12px;line-height:1.7;
-}
+.project{border:1px solid var(--line);background:#15171c;border-radius:12px;padding:13px;margin:10px 0}
+.step{padding:12px 2px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:12px}
+.pill{font-size:10px;padding:5px 9px;border-radius:20px;background:#30343d;color:#e5e7eb;white-space:nowrap}
+.pill.completed{background:#164b37;color:#a8f0c9}.pill.running{background:#62451e;color:#ffe0a1}.pill.paused{background:#592d31;color:#ffc0c0}
+.progress{height:7px;background:#30343d;border-radius:20px;overflow:hidden;margin:13px 0}
+.progress div{height:100%;background:linear-gradient(90deg,#bd7926,#ffd18a);width:0%;transition:width .3s}
+.workflow-summary,.limits{background:#191a1e;border:1px solid #464039;border-radius:13px;padding:15px}
+.workflow-summary p,.limits p{font-size:12px;color:var(--muted);line-height:1.8;margin:6px 0}
+.empty{border:1px dashed #414651;border-radius:12px;padding:20px;text-align:center;color:var(--muted);font-size:12px;line-height:1.7}
 .two-col{display:grid;grid-template-columns:1fr 1fr;gap:15px}
-.mini-label{font-size:10px;color:var(--gold2);letter-spacing:1px;font-weight:800}
-.limits{
-  background:#191a1e;border:1px solid #464039;
-  border-radius:13px;padding:15px;
-}
-.limits p{font-size:12px;color:var(--muted);line-height:1.8;margin:6px 0}
 footer{text-align:center;color:var(--muted);font-size:11px;padding:24px 10px}
 #loginScreen{max-width:430px;margin:9vh auto;padding:16px}
-.login-card{
-  background:linear-gradient(145deg,#24221e,#191b20 60%);
-  border:1px solid #57452d;border-radius:22px;padding:25px;
-}
-.login-brand{display:flex;gap:12px;align-items:center;margin-bottom:25px}
-.login-brand h1{font-size:23px;margin:0}
-.login-brand p{font-size:11px;color:var(--muted);margin:4px 0 0}
-.login-card h2{font-size:18px;margin:0 0 6px}
-.login-card .muted{margin:0 0 15px}
-.login-card button{margin-top:15px}
-#projectDetails h3{font-size:14px}
-.mobile-hint{display:none}
-@media(max-width:650px){
-  .header-inner{padding:11px 13px}
-  .brand h1{font-size:15px}
-  .brand p{font-size:10px}
-  .brand-mark{width:38px;height:38px}
-  main{padding:13px 12px 30px}
-  .hero{padding:20px}
-  .card{padding:15px;border-radius:15px}
-  .section-title{font-size:15px}
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
-  .agent{padding:11px;min-height:90px}
-  .two-col{grid-template-columns:1fr}
-  .mobile-hint{display:block}
-  .header-right .online-text{display:none}
-}
-@media(max-width:370px){
-  .grid{grid-template-columns:1fr}
-}
+.login-card{background:linear-gradient(145deg,#24221e,#191b20 60%);border:1px solid #57452d;border-radius:22px;padding:25px}
+.login-brand{display:flex;gap:12px;align-items:center;margin-bottom:25px}.login-brand h1{font-size:23px;margin:0}.login-brand p{font-size:11px;color:var(--muted);margin:4px 0 0}
+.login-card h2{font-size:18px;margin:0 0 6px}.login-card button{margin-top:15px}
+.thumb-layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(260px,.8fr);gap:16px}
+.thumb-preview-wrap{background:#0b0c0f;border:1px solid var(--line);border-radius:13px;padding:9px}
+#thumbCanvas{display:block;width:100%;height:auto;border-radius:8px;background:#17191e}
+.thumb-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:15px}
+.thumb-card{border:1px solid var(--line);background:#111318;border-radius:12px;padding:8px;cursor:pointer;min-width:0}
+.thumb-card.active{border:2px solid var(--gold);padding:7px}
+.thumb-card img{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;border-radius:7px}
+.thumb-card b{font-size:12px;display:block;margin-top:7px}
+.thumb-controls{display:grid;grid-template-columns:1fr 1fr;gap:0 10px}
+.thumb-controls .full{grid-column:1/-1}
+.color-input{height:44px;padding:5px}
+.checkline{display:flex;align-items:center;gap:8px;margin-top:12px}
+.checkline input{width:auto}
+@media(max-width:720px){.thumb-layout{grid-template-columns:1fr}.two-col{grid-template-columns:1fr}}
+@media(max-width:650px){.header-inner{padding:11px 13px}.brand h1{font-size:15px}.brand p{font-size:10px}.brand-mark{width:38px;height:38px}main{padding:13px 12px 30px}.hero{padding:20px}.card{padding:15px;border-radius:15px}.section-title{font-size:15px}.grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.agent{padding:11px;min-height:90px}.header-right .online-text{display:none}}
+@media(max-width:370px){.grid{grid-template-columns:1fr}.thumb-gallery{grid-template-columns:1fr}}
 </style>
 </head>
-
 <body>
 
 <section id="loginScreen">
   <div class="login-card">
     <div class="login-brand">
       <div class="brand-mark">न</div>
-      <div>
-        <h1>अपना नज़रिया</h1>
-        <p>SOCH APNI, FAISLA AAPKA</p>
-      </div>
+      <div><h1>अपना नज़रिया</h1><p>SOCH APNI, FAISLA AAPKA</p></div>
     </div>
     <div class="mini-label">YOUR PRIVATE CREATOR STUDIO</div>
     <h2 style="margin-top:10px">Workspace Login</h2>
@@ -290,10 +110,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px 10px}
   <div class="header-inner">
     <div class="brand">
       <div class="brand-mark">न</div>
-      <div>
-        <h1>अपना नज़रिया <span style="color:var(--gold)">Studio</span></h1>
-        <p>Two creators · One production desk</p>
-      </div>
+      <div><h1>अपना नज़रिया <span style="color:var(--gold)">Studio</span></h1><p>Two creators · One production desk</p></div>
     </div>
     <div class="header-right">
       <span class="muted online-text"><span class="online-dot"></span>Workspace</span>
@@ -308,6 +125,7 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px 10px}
   <a class="nav-link" href="#profile">Creator DNA</a>
   <a class="nav-link" href="#workflowCard">Workflow</a>
   <a class="nav-link" href="#manual">Agents</a>
+  <a class="nav-link" href="#thumbnailStudio">Thumbnail Studio</a>
   <a class="nav-link" href="#history">Projects</a>
 </nav>
 
@@ -323,173 +141,125 @@ footer{text-align:center;color:var(--muted);font-size:11px;padding:24px 10px}
 
 <section class="card" id="manager">
   <div class="section-head">
-    <div>
-      <div class="mini-label">START A NEW PROJECT</div>
-      <h2 class="section-title" style="margin-top:6px">AI Manager Workspace</h2>
-      <p class="section-sub">अपना विषय बताओ। Production की शुरुआत यहीं से होगी।</p>
-    </div>
+    <div><div class="mini-label">START A NEW PROJECT</div><h2 class="section-title" style="margin-top:6px">AI Manager Workspace</h2><p class="section-sub">अपना विषय बताओ। Production की शुरुआत यहीं से होगी।</p></div>
     <div class="section-icon">✦</div>
   </div>
-
   <label>आज किस मुद्दे पर वीडियो बनाना है?</label>
   <textarea id="topic" placeholder="उदाहरण: भारत में बेरोजगारी के आंकड़ों को आम युवा कैसे समझे?"></textarea>
-
   <div class="two-col">
-    <div>
-      <label>वीडियो Format</label>
-      <select id="videoFormat">
-        <option value="Short">YouTube Short</option>
-        <option value="Long Video">Long Video</option>
-        <option value="Discussion">Two-host Discussion</option>
-        <option value="Live">Live Show</option>
-      </select>
-    </div>
-    <div>
-      <label>अनुमानित अवधि</label>
-      <select id="videoDuration">
-        <option value="60 सेकंड">लगभग 60 सेकंड</option>
-        <option value="90 सेकंड">लगभग 90 सेकंड</option>
-        <option value="3-5 मिनट">3–5 मिनट</option>
-        <option value="8-10 मिनट">8–10 मिनट</option>
-        <option value="12-15 मिनट">12–15 मिनट</option>
-        <option value="20 मिनट">लगभग 20 मिनट</option>
-      </select>
-    </div>
+    <div><label>वीडियो Format</label><select id="videoFormat"><option value="Short">YouTube Short</option><option value="Long Video">Long Video</option><option value="Discussion">Two-host Discussion</option><option value="Live">Live Show</option></select></div>
+    <div><label>अनुमानित अवधि</label><select id="videoDuration"><option value="60 सेकंड">लगभग 60 सेकंड</option><option value="90 सेकंड">लगभग 90 सेकंड</option><option value="3-5 मिनट">3–5 मिनट</option><option value="8-10 मिनट">8–10 मिनट</option><option value="12-15 मिनट">12–15 मिनट</option><option value="20 मिनट">लगभग 20 मिनट</option></select></div>
   </div>
-
   <label>विशेष निर्देश / तुम्हारा नजरिया</label>
   <textarea id="extra" placeholder="दोनों भाइयों की राय, उपलब्ध स्रोत, किन बातों पर ध्यान देना है..."></textarea>
-
-  <div class="row" style="margin-top:15px">
-    <button class="primary" id="startWorkflow">✦ AI Manager से काम शुरू करें</button>
-  </div>
+  <div class="row" style="margin-top:15px"><button class="primary" id="startWorkflow">✦ AI Manager से काम शुरू करें</button></div>
   <p id="workflowStatus" class="status"></p>
-  <p class="muted mobile-hint">ध्यान दें: AI output को publish करने से पहले खुद जाँचें।</p>
 </section>
 
 <section class="card" id="profile">
-  <div class="section-head">
-    <div>
-      <div class="mini-label">SHARED CREATOR PROFILE</div>
-      <h2 class="section-title" style="margin-top:6px">Creator DNA</h2>
-      <p class="section-sub">तुम्हारे चैनल की आवाज और पहचान।</p>
-    </div>
-    <div class="section-icon">◈</div>
-  </div>
-
+  <div class="section-head"><div><div class="mini-label">SHARED CREATOR PROFILE</div><h2 class="section-title" style="margin-top:6px">Creator DNA</h2><p class="section-sub">तुम्हारे चैनल की आवाज और पहचान।</p></div><div class="section-icon">◈</div></div>
   <label>Creator Voice / भाषा</label>
   <textarea id="voice">सरल बोलचाल वाली हिंदी, हल्का UP/desi touch। बातचीत स्वाभाविक हो, टीवी एंकर जैसी नहीं। दो भाइयों की अलग राय हो सकती है, लेकिन नकली बहस नहीं।</textarea>
-
   <label>YouTube Reference Channels (हर लाइन में एक URL)</label>
   <textarea id="channels" placeholder="https://www.youtube.com/@channelname"></textarea>
-
-  <div class="row" style="margin-top:13px">
-    <button class="primary" id="saveProfile">Profile Save करें</button>
-    <span id="profileStatus" class="status"></span>
-  </div>
+  <div class="row" style="margin-top:13px"><button class="primary" id="saveProfile">Profile Save करें</button><span id="profileStatus" class="status"></span></div>
 </section>
 
 <section id="workflowCard" class="card hidden">
-  <div class="section-head">
-    <div>
-      <div class="mini-label">PRODUCTION TRACKER</div>
-      <h2 class="section-title" style="margin-top:6px">Project Workflow</h2>
-      <p class="section-sub">किस Agent का काम पूरा हुआ और अगला कदम क्या है।</p>
-    </div>
-    <div class="section-icon">◎</div>
-  </div>
-
-  <div class="workflow-summary">
-    <strong id="workflowInfo">Project Status</strong>
-    <p id="progressText">0 / 0 Agents completed</p>
-  </div>
+  <div class="section-head"><div><div class="mini-label">PRODUCTION TRACKER</div><h2 class="section-title" style="margin-top:6px">Project Workflow</h2><p class="section-sub">किस Agent का काम पूरा हुआ और अगला कदम क्या है।</p></div><div class="section-icon">◎</div></div>
+  <div class="workflow-summary"><strong id="workflowInfo">Project Status</strong><p id="progressText">0 / 0 Agents completed</p></div>
   <div class="progress"><div id="progressBar"></div></div>
   <div id="stepList"></div>
-
-  <div class="row" style="margin-top:14px">
-    <button id="resumeWorkflow" class="primary hidden">Workflow Resume करें</button>
-    <button id="refreshWorkflow" class="secondary">↻ Refresh Status</button>
-  </div>
-
-  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:24px">
-    <div>
-      <div class="mini-label">WORKSPACE RESULTS</div>
-      <h3 style="margin:5px 0 0;font-size:15px">Agent Outputs</h3>
-    </div>
-    <button id="copyAllWorkflow" class="copy-button" disabled>▣ Copy All</button>
-  </div>
-  <div id="workflowOutputs">
-    <div class="empty">Agent के जवाब यहाँ दिखाई देंगे।</div>
-  </div>
+  <div class="row" style="margin-top:14px"><button id="resumeWorkflow" class="primary hidden">Workflow Resume करें</button><button id="refreshWorkflow" class="secondary">↻ Refresh Status</button></div>
+  <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:24px"><div><div class="mini-label">WORKSPACE RESULTS</div><h3 style="margin:5px 0 0;font-size:15px">Agent Outputs</h3></div><button id="copyAllWorkflow" class="copy-button" disabled>▣ Copy All</button></div>
+  <div id="workflowOutputs"><div class="empty">Agent के जवाब यहाँ दिखाई देंगे।</div></div>
 </section>
 
 <section class="card" id="manual">
-  <div class="section-head">
-    <div>
-      <div class="mini-label">SPECIALIST WORKSPACE</div>
-      <h2 class="section-title" style="margin-top:6px">AI Specialist Agents</h2>
-      <p class="section-sub">किसी एक विशेषज्ञ को अलग से काम दे सकते हो।</p>
-    </div>
-    <div class="section-icon">✧</div>
-  </div>
-
+  <div class="section-head"><div><div class="mini-label">SPECIALIST WORKSPACE</div><h2 class="section-title" style="margin-top:6px">AI Specialist Agents</h2><p class="section-sub">किसी एक विशेषज्ञ को अलग से काम दे सकते हो।</p></div><div class="section-icon">✧</div></div>
   <div id="agents" class="grid"></div>
-
-  <label>Agent को क्या काम देना है?</label>
-  <textarea id="manualTopic" placeholder="अपना सवाल या काम लिखो..."></textarea>
-
-  <label>अतिरिक्त निर्देश</label>
-  <textarea id="manualExtra" placeholder="वैकल्पिक"></textarea>
-
-  <div class="row" style="margin-top:13px">
-    <button class="primary" id="manualSend">Selected Agent से जवाब लें</button>
-  </div>
+  <label>Agent को क्या काम देना है?</label><textarea id="manualTopic" placeholder="अपना सवाल या काम लिखो..."></textarea>
+  <label>अतिरिक्त निर्देश</label><textarea id="manualExtra" placeholder="वैकल्पिक"></textarea>
+  <div class="row" style="margin-top:13px"><button class="primary" id="manualSend">Selected Agent से जवाब लें</button></div>
   <p id="manualStatus" class="status"></p>
   <div id="manualAnswer" class="output">Agent का जवाब यहाँ दिखाई देगा।</div>
   <button id="copyManual" class="copy-button" style="margin-top:10px">▣ जवाब Copy करें</button>
 </section>
 
-<section class="card" id="history">
+<!-- THUMBNAIL STUDIO -->
+<section class="card" id="thumbnailStudio">
   <div class="section-head">
-    <div>
-      <div class="mini-label">YOUR WORK LIBRARY</div>
-      <h2 class="section-title" style="margin-top:6px">Project History</h2>
-      <p class="section-sub">पहले बनाए गए Projects और उनके saved outputs।</p>
-    </div>
-    <div class="section-icon">▤</div>
+    <div><div class="mini-label">AI THUMBNAIL WORKSHOP</div><h2 class="section-title" style="margin-top:6px">Thumbnail Studio</h2><p class="section-sub">AI से background बनाओ, अपना Hindi text लगाओ और JPG सेव करो।</p></div>
+    <div class="section-icon">▧</div>
   </div>
+
+  <label>वीडियो का विषय</label>
+  <textarea id="thumbTopic" placeholder="उदाहरण: भारत में बेरोजगारी और युवाओं की परेशानी"></textarea>
+
+  <div class="two-col">
+    <div><label>मुख्य Headline</label><input id="thumbHeadline" maxlength="100" placeholder="जैसे: नौकरी कहाँ है?"></div>
+    <div><label>छोटी Subline</label><input id="thumbSubline" maxlength="150" placeholder="जैसे: युवाओं का बड़ा सवाल"></div>
+  </div>
+  <div class="row" style="margin-top:14px">
+    <button class="primary" id="thumbGenerate">✦ 5 AI Thumbnail Background बनाओ</button>
+    <span id="thumbStatus" class="status"></span>
+  </div>
+
+  <div id="thumbResults" class="hidden">
+    <div class="thumb-gallery" id="thumbGallery"></div>
+    <div class="thumb-layout" style="margin-top:18px">
+      <div>
+        <div class="mini-label">LIVE PREVIEW · 16:9</div>
+        <div class="thumb-preview-wrap" style="margin-top:9px"><canvas id="thumbCanvas" width="1280" height="720"></canvas></div>
+        <div class="row" style="margin-top:12px">
+          <button class="primary" id="thumbDownload">⬇ JPG Download (1280×720)</button>
+          <button class="secondary" id="thumbRedraw">Preview Refresh</button>
+        </div>
+        <p class="muted">Download के बाद JPG तुम्हारे फोन में सेव होगा। फिर YouTube Studio में manually upload करना है।</p>
+      </div>
+      <div>
+        <div class="mini-label">THUMBNAIL EDITOR</div>
+        <div class="thumb-controls">
+          <div class="full"><label>Headline Text</label><input id="editHeadline" maxlength="100"></div>
+          <div class="full"><label>Subline Text</label><input id="editSubline" maxlength="150"></div>
+          <div><label>Headline Color</label><input class="color-input" type="color" id="editHeadlineColor" value="#ffffff"></div>
+          <div><label>Accent Color</label><input class="color-input" type="color" id="editAccentColor" value="#ffcc00"></div>
+          <div><label>Font Size</label><input type="number" id="editFontSize" min="28" max="110" value="64"></div>
+          <div><label>Subline Size</label><input type="number" id="editSubSize" min="16" max="60" value="30"></div>
+          <div class="full"><label>Text Position</label><select id="editPosition"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>
+          <div class="full"><label>Text Alignment</label><select id="editAlign"><option value="left">Left</option><option value="center">Center</option><option value="right">Right</option></select></div>
+          <div class="full"><label>Dark Overlay</label><input type="range" id="editOverlay" min="0" max="85" value="35"></div>
+        </div>
+        <label class="checkline"><input type="checkbox" id="editOutline" checked> Text Outline</label>
+        <label class="checkline"><input type="checkbox" id="editShadow" checked> Text Shadow</label>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="card" id="history">
+  <div class="section-head"><div><div class="mini-label">YOUR WORK LIBRARY</div><h2 class="section-title" style="margin-top:6px">Project History</h2><p class="section-sub">पहले बनाए गए Projects और उनके saved outputs।</p></div><div class="section-icon">▤</div></div>
   <button id="refreshProjects" class="secondary">↻ History Refresh करें</button>
   <div id="projectList" style="margin-top:12px"></div>
 </section>
 
 <section class="card">
-  <div class="section-head">
-    <div>
-      <div class="mini-label">PROJECT LIBRARY</div>
-      <h2 class="section-title" style="margin-top:6px">Selected Project</h2>
-      <p class="section-sub">History से किसी Project को खोलकर उसका पूरा काम देखें।</p>
-    </div>
-    <div class="section-icon">▣</div>
-  </div>
+  <div class="section-head"><div><div class="mini-label">PROJECT LIBRARY</div><h2 class="section-title" style="margin-top:6px">Selected Project</h2><p class="section-sub">History से किसी Project को खोलकर उसका पूरा काम देखें।</p></div><div class="section-icon">▣</div></div>
   <div id="projectDetails" class="muted">अभी कोई Project select नहीं किया गया है।</div>
 </section>
 
 <section class="limits">
-  <div class="mini-label">TRANSPARENCY FIRST</div>
-  <h3 style="margin:7px 0">कुछ जरूरी बातें</h3>
+  <div class="mini-label">TRANSPARENCY FIRST</div><h3 style="margin:7px 0">कुछ जरूरी बातें</h3>
   <p>
     • Workers AI अपने आप इंटरनेट या YouTube browse नहीं करता।<br>
     • दिए गए URLs अपने आप verify नहीं होते।<br>
     • बिना प्रमाण किसी claim को VERIFIED नहीं माना जाएगा।<br>
     • वास्तविक Analytics के लिए YouTube Studio का data जरूरी है।<br>
-    • AI output को इंसानी जाँच के बाद ही इस्तेमाल करें।
+    • AI output को इंसानी जाँच के बाद ही इस्तेमाल करें।<br>
+    • Thumbnail background generation Workers AI की उपलब्धता और usage limits पर निर्भर है।
   </p>
 </section>
-
-<footer>
-  <div style="color:var(--gold2);font-weight:800;margin-bottom:5px">अपना नज़रिया</div>
-  Soch Apni, Faisla Aapka · Shared Creator Studio
-</footer>
+<footer><div style="color:var(--gold2);font-weight:800;margin-bottom:5px">अपना नज़रिया</div>Soch Apni, Faisla Aapka · Shared Creator Studio</footer>
 </main>
 </div>
 
@@ -535,298 +305,145 @@ let workflowBusy = false;
 
 async function copyText(text){
  const value=String(text||"");
- if(!value.trim()) throw new Error("कॉपी करने के लिए कोई जवाब नहीं है।");
- try{
-  if(navigator.clipboard && window.isSecureContext){
-   await navigator.clipboard.writeText(value);
-   return true;
-  }
- }catch(e){}
- const t=document.createElement("textarea");
- t.value=value;t.setAttribute("readonly","");
- t.style.position="fixed";t.style.left="-9999px";
- document.body.appendChild(t);t.focus();t.select();
- t.setSelectionRange(0,t.value.length);
- let ok=false;
- try{ok=document.execCommand("copy")}catch(e){}
- t.remove();
- if(!ok) throw new Error("इस browser में Copy नहीं हो पाया।");
- return true;
+ if(!value.trim())throw new Error("कॉपी करने के लिए कोई जवाब नहीं है।");
+ try{if(navigator.clipboard&&window.isSecureContext){await navigator.clipboard.writeText(value);return true}}catch(e){}
+ const t=document.createElement("textarea");t.value=value;t.setAttribute("readonly","");
+ t.style.position="fixed";t.style.left="-9999px";document.body.appendChild(t);
+ t.focus();t.select();t.setSelectionRange(0,t.value.length);
+ let ok=false;try{ok=document.execCommand("copy")}catch(e){}
+ t.remove();if(!ok)throw new Error("इस browser में Copy नहीं हो पाया।");return true;
 }
 
 function createCopyButton(text,label="▣ Copy"){
- const b=document.createElement("button");
- b.type="button";b.className="copy-button";b.textContent=label;
- b.onclick=async()=>{
-  try{
-   await copyText(text);b.textContent="✓ Copied!";
-   setTimeout(()=>b.textContent=label,1800);
-  }catch(e){alert(e.message)}
- };
+ const b=document.createElement("button");b.type="button";b.className="copy-button";b.textContent=label;
+ b.onclick=async()=>{try{await copyText(text);b.textContent="✓ Copied!";setTimeout(()=>b.textContent=label,1800)}catch(e){alert(e.message)}};
  return b;
 }
-
 function getOutputText(container){
  return Array.from(container.querySelectorAll("[data-copy-content]"))
  .map(el=>(el.dataset.copyTitle||"Output")+"\n\n"+el.textContent.trim())
  .join("\n\n------------------------------\n\n");
 }
-
-function updateCopyAllButton(container,button){
- button.disabled=!container.querySelector("[data-copy-content]");
-}
-
+function updateCopyAllButton(container,button){button.disabled=!container.querySelector("[data-copy-content]")}
 function escapeHTML(value){
- return String(value??"").replace(/[&<>"']/g,ch=>({
- "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
- })[ch]);
+ return String(value??"").replace(/[&<>"']/g,ch=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[ch]));
 }
-
 async function api(path,options={}){
- const response=await fetch(path,{
-  ...options,credentials:"same-origin",
-  headers:{
-   ...(options.headers||{}),
-   ...(options.body?{"Content-Type":"application/json"}:{})
-  }
- });
- let data;
- try{data=await response.json()}
- catch{throw new Error("Server ने valid JSON जवाब नहीं दिया।")}
- if(!response.ok||data.ok===false)
-  throw new Error(data.details||data.error||`Request failed (${response.status})`);
+ const response=await fetch(path,{...options,credentials:"same-origin",headers:{...(options.headers||{}),...(options.body?{"Content-Type":"application/json"}:{})}});
+ let data;try{data=await response.json()}catch{throw new Error("Server ने valid JSON जवाब नहीं दिया।")}
+ if(!response.ok||data.ok===false)throw new Error(data.details||data.error||`Request failed (${response.status})`);
  return data;
 }
-
-function setStatus(id,message,isError=false){
- $(id).textContent=message;
- $(id).classList.toggle("error",isError);
-}
-
-function showApp(){
- $("loginScreen").classList.add("hidden");
- $("app").classList.remove("hidden");
-}
-function showLogin(){
- $("app").classList.add("hidden");
- $("loginScreen").classList.remove("hidden");
-}
+function setStatus(id,message,isError=false){$(id).textContent=message;$(id).classList.toggle("error",isError)}
+function showApp(){$("loginScreen").classList.add("hidden");$("app").classList.remove("hidden")}
+function showLogin(){$("app").classList.add("hidden");$("loginScreen").classList.remove("hidden")}
 
 async function checkLogin(){
- try{
-  const data=await api("/api/me");
-  if(data.authenticated){showApp();await loadDashboard()}
-  else showLogin();
- }catch(e){showLogin()}
+ try{const data=await api("/api/me");if(data.authenticated){showApp();await loadDashboard()}else showLogin()}
+ catch(e){showLogin()}
 }
-
 $("loginForm").addEventListener("submit",async event=>{
- event.preventDefault();
- const b=$("loginButton");b.disabled=true;
- setStatus("loginStatus","Login हो रहा है...");
+ event.preventDefault();const b=$("loginButton");b.disabled=true;setStatus("loginStatus","Login हो रहा है...");
  try{
-  await api("/api/login",{
-   method:"POST",
-   body:JSON.stringify({
-    loginId:$("loginId").value.trim(),
-    password:$("loginPassword").value
-   })
-  });
-  $("loginPassword").value="";
-  showApp();await loadDashboard();
-  setStatus("loginStatus","Login सफल!");
- }catch(e){setStatus("loginStatus",e.message,true)}
- finally{b.disabled=false}
+  await api("/api/login",{method:"POST",body:JSON.stringify({loginId:$("loginId").value.trim(),password:$("loginPassword").value})});
+  $("loginPassword").value="";showApp();await loadDashboard();setStatus("loginStatus","Login सफल!");
+ }catch(e){setStatus("loginStatus",e.message,true)}finally{b.disabled=false}
 });
-
 $("logoutButton").onclick=async()=>{
  if(!confirm("क्या इस फोन से Logout करना है?"))return;
- try{
-  await api("/api/logout",{method:"POST"});
-  currentJobId="";currentProjectId="";
-  showLogin();
- }catch(e){alert(e.message)}
+ try{await api("/api/logout",{method:"POST"});currentJobId="";currentProjectId="";showLogin()}catch(e){alert(e.message)}
 };
 
 async function loadProfile(){
- const data=await api("/api/profile");
- $("voice").value=data.voice||"";
- $("channels").value=(data.channels||[]).map(x=>x.url).join("\n");
+ const data=await api("/api/profile");$("voice").value=data.voice||"";$("channels").value=(data.channels||[]).map(x=>x.url).join("\n");
 }
-
 $("saveProfile").onclick=async()=>{
  try{
   setStatus("profileStatus","Profile save हो रही है...");
-  await api("/api/profile",{
-   method:"POST",
-   body:JSON.stringify({
-    voice:$("voice").value,
-    channels:$("channels").value.split("\n").map(x=>x.trim()).filter(Boolean),
-    replaceChannels:false
-   })
-  });
+  await api("/api/profile",{method:"POST",body:JSON.stringify({voice:$("voice").value,channels:$("channels").value.split("\n").map(x=>x.trim()).filter(Boolean),replaceChannels:false})});
   setStatus("profileStatus","✓ Cloud Profile Saved");
  }catch(e){setStatus("profileStatus",e.message,true)}
 };
-
 function renderAgents(){
  const box=$("agents");box.innerHTML="";
  agents.forEach(([id,name,desc,icon])=>{
-  const div=document.createElement("div");
-  div.className="agent"+(id===selectedAgent?" active":"");
+  const div=document.createElement("div");div.className="agent"+(id===selectedAgent?" active":"");
   div.innerHTML=`<div class="agent-icon">${icon}</div><b>${escapeHTML(name)}</b><small>${escapeHTML(desc)}</small>`;
-  div.onclick=()=>{selectedAgent=id;renderAgents()};
-  box.appendChild(div);
+  div.onclick=()=>{selectedAgent=id;renderAgents()};box.appendChild(div);
  });
 }
-
 async function loadDashboard(){
- try{await loadProfile()}
- catch(e){setStatus("profileStatus",e.message,true)}
- renderAgents();
- await loadProjects();
+ try{await loadProfile()}catch(e){setStatus("profileStatus",e.message,true)}
+ renderAgents();await loadProjects();
 }
-
 function renderSteps(steps){
  const box=$("stepList");box.innerHTML="";
- const completed=steps.filter(x=>x.status==="completed").length;
- const total=steps.length;
+ const completed=steps.filter(x=>x.status==="completed").length,total=steps.length;
  const percentage=total?Math.round(completed/total*100):0;
- $("progressBar").style.width=percentage+"%";
- $("progressText").textContent=`${completed} / ${total} Agents completed (${percentage}%)`;
+ $("progressBar").style.width=percentage+"%";$("progressText").textContent=`${completed} / ${total} Agents completed (${percentage}%)`;
  steps.forEach(step=>{
-  const row=document.createElement("div");row.className="step";
-  const status=step.status||"queued";
+  const row=document.createElement("div");row.className="step";const status=step.status||"queued";
   row.innerHTML=`<span>${escapeHTML(step.agent_name)}</span><span class="pill ${escapeHTML(status)}">${escapeHTML(status)}</span>`;
   box.appendChild(row);
  });
 }
-
 function appendWorkflowOutput(agent,answer){
- const box=$("workflowOutputs");
- const empty=box.querySelector(".empty");if(empty)empty.remove();
+ const box=$("workflowOutputs");const empty=box.querySelector(".empty");if(empty)empty.remove();
  const section=document.createElement("div");section.className="project";
  const heading=document.createElement("b");heading.textContent=agent;
- const output=document.createElement("div");output.className="output";
- output.textContent=answer;output.dataset.copyContent="true";output.dataset.copyTitle=agent;
- const actions=document.createElement("div");actions.className="output-actions";
- actions.appendChild(createCopyButton(answer,"▣ Copy जवाब"));
- section.append(heading,output,actions);box.appendChild(section);
- updateCopyAllButton(box,$("copyAllWorkflow"));
+ const output=document.createElement("div");output.className="output";output.textContent=answer;output.dataset.copyContent="true";output.dataset.copyTitle=agent;
+ const actions=document.createElement("div");actions.className="output-actions";actions.appendChild(createCopyButton(answer,"▣ Copy जवाब"));
+ section.append(heading,output,actions);box.appendChild(section);updateCopyAllButton(box,$("copyAllWorkflow"));
 }
-
 $("copyAllWorkflow").onclick=async()=>{
- try{
-  await copyText(getOutputText($("workflowOutputs")));
-  $("copyAllWorkflow").textContent="✓ सभी जवाब Copied!";
-  setTimeout(()=>$("copyAllWorkflow").textContent="▣ Copy All",2000);
- }catch(e){alert(e.message)}
+ try{await copyText(getOutputText($("workflowOutputs")));$("copyAllWorkflow").textContent="✓ सभी जवाब Copied!";setTimeout(()=>$("copyAllWorkflow").textContent="▣ Copy All",2000)}
+ catch(e){alert(e.message)}
 };
-
 async function refreshWorkflow(){
  if(!currentJobId)return;
  const data=await api("/api/workflow/status?jobId="+encodeURIComponent(currentJobId));
- $("workflowCard").classList.remove("hidden");
- $("workflowInfo").textContent=`Project: ${currentProjectId} · Status: ${data.job.status}`;
- renderSteps(data.steps||[]);
- const paused=data.job.status==="paused";
- $("resumeWorkflow").classList.toggle("hidden",!paused);
- return data;
+ $("workflowCard").classList.remove("hidden");$("workflowInfo").textContent=`Project: ${currentProjectId} · Status: ${data.job.status}`;
+ renderSteps(data.steps||[]);$("resumeWorkflow").classList.toggle("hidden",data.job.status!=="paused");return data;
 }
-
 async function runWorkflow(){
- if(workflowBusy||!currentJobId)return;
- workflowBusy=true;
- $("startWorkflow").disabled=true;
- $("resumeWorkflow").disabled=true;
+ if(workflowBusy||!currentJobId)return;workflowBusy=true;$("startWorkflow").disabled=true;$("resumeWorkflow").disabled=true;
  try{
   $("workflowCard").classList.remove("hidden");
   for(let i=0;i<20;i++){
    const status=await refreshWorkflow();
    if(status.job.status==="completed"){
-    setStatus("workflowStatus","✓ Workflow पूरा हुआ!");
-    await loadProjects();
-    await loadProjectDetails(currentProjectId);
-    break;
+    setStatus("workflowStatus","✓ Workflow पूरा हुआ!");await loadProjects();await loadProjectDetails(currentProjectId);break;
    }
-   if(status.job.status==="paused"){
-    setStatus("workflowStatus","Workflow रुका है। Resume दबाकर जारी करें।",true);
-    break;
-   }
-   const result=await api("/api/workflow/step",{
-    method:"POST",body:JSON.stringify({jobId:currentJobId})
-   });
+   if(status.job.status==="paused"){setStatus("workflowStatus","Workflow रुका है। Resume दबाकर जारी करें।",true);break}
+   const result=await api("/api/workflow/step",{method:"POST",body:JSON.stringify({jobId:currentJobId})});
    if(result.agent&&result.answer)appendWorkflowOutput(result.agent,result.answer);
-   if(result.done){
-    setStatus("workflowStatus","✓ सभी Agent steps पूरे हो गए!");
-    await refreshWorkflow();await loadProjects();
-    await loadProjectDetails(currentProjectId);break;
-   }
+   if(result.done){setStatus("workflowStatus","✓ सभी Agent steps पूरे हो गए!");await refreshWorkflow();await loadProjects();await loadProjectDetails(currentProjectId);break}
    setStatus("workflowStatus",result.agent?`${result.agent} पूरा हुआ। अगला Agent शुरू होगा...`:"Workflow चल रहा है...");
   }
- }catch(e){
-  setStatus("workflowStatus",e.message,true);
-  try{await refreshWorkflow()}catch(x){}
- }finally{
-  workflowBusy=false;
-  $("startWorkflow").disabled=false;
-  $("resumeWorkflow").disabled=false;
- }
+ }catch(e){setStatus("workflowStatus",e.message,true);try{await refreshWorkflow()}catch(x){}}
+ finally{workflowBusy=false;$("startWorkflow").disabled=false;$("resumeWorkflow").disabled=false}
 }
-
 $("startWorkflow").onclick=async()=>{
- const topic=$("topic").value.trim();
- if(!topic){setStatus("workflowStatus","पहले विषय लिखें।",true);return}
- if(workflowBusy)return;
- $("startWorkflow").disabled=true;
- setStatus("workflowStatus","AI Manager Project बना रहा है...");
- const extra=[
-  "वीडियो Format: "+$("videoFormat").value,
-  "अनुमानित अवधि: "+$("videoDuration").value,
-  $("extra").value
- ].filter(Boolean).join("\n");
+ const topic=$("topic").value.trim();if(!topic){setStatus("workflowStatus","पहले विषय लिखें।",true);return}if(workflowBusy)return;
+ $("startWorkflow").disabled=true;setStatus("workflowStatus","AI Manager Project बना रहा है...");
+ const extra=["वीडियो Format: "+$("videoFormat").value,"अनुमानित अवधि: "+$("videoDuration").value,$("extra").value].filter(Boolean).join("\n");
  try{
-  const data=await api("/api/workflow/start",{
-   method:"POST",
-   body:JSON.stringify({
-    topic,extra,voice:$("voice").value,
-    channels:$("channels").value.split("\n").map(x=>x.trim()).filter(Boolean)
-   })
-  });
-  currentJobId=data.jobId;currentProjectId=data.projectId;
-  $("workflowOutputs").innerHTML="";
-  $("copyAllWorkflow").disabled=true;
-  $("workflowCard").classList.remove("hidden");
-  setStatus("workflowStatus",`Project तैयार। ${data.totalSteps} Agent steps निर्धारित हुए।`);
-  await runWorkflow();
- }catch(e){
-  setStatus("workflowStatus",e.message,true);
-  $("startWorkflow").disabled=false;
- }
+  const data=await api("/api/workflow/start",{method:"POST",body:JSON.stringify({topic,extra,voice:$("voice").value,channels:$("channels").value.split("\n").map(x=>x.trim()).filter(Boolean)})});
+  currentJobId=data.jobId;currentProjectId=data.projectId;$("workflowOutputs").innerHTML="";$("copyAllWorkflow").disabled=true;$("workflowCard").classList.remove("hidden");
+  setStatus("workflowStatus",`Project तैयार। ${data.totalSteps} Agent steps निर्धारित हुए।`);await runWorkflow();
+ }catch(e){setStatus("workflowStatus",e.message,true);$("startWorkflow").disabled=false}
 };
-
 $("resumeWorkflow").onclick=async()=>{
  if(!currentJobId)return;
- try{
-  await api("/api/workflow/resume",{
-   method:"POST",body:JSON.stringify({jobId:currentJobId})
-  });
-  setStatus("workflowStatus","Workflow फिर शुरू हो रहा है...");
-  await runWorkflow();
- }catch(e){setStatus("workflowStatus",e.message,true)}
-};
-
-$("refreshWorkflow").onclick=async()=>{
- try{await refreshWorkflow();setStatus("workflowStatus","Status refresh हो गया।")}
+ try{await api("/api/workflow/resume",{method:"POST",body:JSON.stringify({jobId:currentJobId})});setStatus("workflowStatus","Workflow फिर शुरू हो रहा है...");await runWorkflow()}
  catch(e){setStatus("workflowStatus",e.message,true)}
 };
+$("refreshWorkflow").onclick=async()=>{try{await refreshWorkflow();setStatus("workflowStatus","Status refresh हो गया।")}catch(e){setStatus("workflowStatus",e.message,true)}};
 
 $("manualSend").onclick=async()=>{
- const topic=$("manualTopic").value.trim();
- if(!topic){setStatus("manualStatus","पहले अपना काम लिखें।",true);return}
+ const topic=$("manualTopic").value.trim();if(!topic){setStatus("manualStatus","पहले अपना काम लिखें।",true);return}
  const agent=agents.find(x=>x[0]===selectedAgent);
- const prompt=`
-PROJECT: APNA NAZARIYA
+ const prompt=`PROJECT: APNA NAZARIYA
 CREATOR VOICE:
 ${$("voice").value}
 REFERENCE CHANNELS:
@@ -842,99 +459,234 @@ RULES:
 - Natural conversational Hindi.
 - Do not invent facts, sources or analytics.
 - Separate fact, allegation, opinion and assumption.
-- Clearly mention missing evidence.
-`;
- const b=$("manualSend");b.disabled=true;
- $("manualAnswer").textContent="";
- setStatus("manualStatus","AI जवाब तैयार कर रहा है...");
+- Clearly mention missing evidence.`;
+ const b=$("manualSend");b.disabled=true;$("manualAnswer").textContent="";setStatus("manualStatus","AI जवाब तैयार कर रहा है...");
  try{
-  const data=await api("/api/ai",{
-   method:"POST",body:JSON.stringify({prompt})
-  });
-  $("manualAnswer").textContent=data.answer||"";
-  setStatus("manualStatus",`${data.agent||agent[1]} का जवाब मिल गया!`);
- }catch(e){
-  $("manualAnswer").textContent="";
-  setStatus("manualStatus",e.message,true);
- }finally{b.disabled=false}
+  const data=await api("/api/ai",{method:"POST",body:JSON.stringify({prompt})});
+  $("manualAnswer").textContent=data.answer||"";setStatus("manualStatus",`${data.agent||agent[1]} का जवाब मिल गया!`);
+ }catch(e){$("manualAnswer").textContent="";setStatus("manualStatus",e.message,true)}finally{b.disabled=false}
 };
-
 $("copyManual").onclick=async()=>{
- try{
-  await copyText($("manualAnswer").textContent);
-  $("copyManual").textContent="✓ Copied!";
-  setTimeout(()=>$("copyManual").textContent="▣ जवाब Copy करें",1800);
- }catch(e){alert(e.message)}
+ try{await copyText($("manualAnswer").textContent);$("copyManual").textContent="✓ Copied!";setTimeout(()=>$("copyManual").textContent="▣ जवाब Copy करें",1800)}
+ catch(e){alert(e.message)}
 };
 
 async function loadProjects(){
  try{
-  const data=await api("/api/projects");
-  const box=$("projectList");box.innerHTML="";
-  if(!data.projects.length){
-   box.innerHTML='<div class="empty">अभी कोई Project नहीं है।<br>अपना पहला Project AI Manager से शुरू करें।</div>';
-   return;
-  }
+  const data=await api("/api/projects");const box=$("projectList");box.innerHTML="";
+  if(!data.projects.length){box.innerHTML='<div class="empty">अभी कोई Project नहीं है।<br>अपना पहला Project AI Manager से शुरू करें।</div>';return}
   data.projects.forEach(project=>{
    const div=document.createElement("div");div.className="project";
-   div.innerHTML=`
-    <b>${escapeHTML(project.title)}</b>
-    <p class="muted">${escapeHTML(project.status)} · ${escapeHTML(project.updated_at||"")}</p>
-    <button class="secondary" data-project="${escapeHTML(project.id)}">Project खोलें →</button>
-   `;
-   div.querySelector("button").onclick=()=>loadProjectDetails(project.id);
-   box.appendChild(div);
+   div.innerHTML=`<b>${escapeHTML(project.title)}</b><p class="muted">${escapeHTML(project.status)} · ${escapeHTML(project.updated_at||"")}</p><button class="secondary" data-project="${escapeHTML(project.id)}">Project खोलें →</button>`;
+   div.querySelector("button").onclick=()=>loadProjectDetails(project.id);box.appendChild(div);
   });
  }catch(e){$("projectList").textContent=e.message}
 }
-
 async function loadProjectDetails(projectId){
  try{
-  const data=await api("/api/projects/"+encodeURIComponent(projectId));
-  const box=$("projectDetails");box.innerHTML="";
+  const data=await api("/api/projects/"+encodeURIComponent(projectId));const box=$("projectDetails");box.innerHTML="";
   const heading=document.createElement("h3");heading.textContent=data.project.title;
   const topic=document.createElement("p");topic.textContent=data.project.topic;
-  const status=document.createElement("p");status.className="muted";
-  status.textContent="Status: "+data.project.status;
+  const status=document.createElement("p");status.className="muted";status.textContent="Status: "+data.project.status;
   const outputHeading=document.createElement("h3");outputHeading.textContent="Saved Agent Outputs";
-  const copyAll=document.createElement("button");
-  copyAll.className="copy-button";copyAll.textContent="▣ Copy All Saved Outputs";
-  copyAll.disabled=true;
-  copyAll.onclick=async()=>{
-   try{
-    await copyText(getOutputText(box));
-    copyAll.textContent="✓ सभी जवाब Copied!";
-    setTimeout(()=>copyAll.textContent="▣ Copy All Saved Outputs",2000);
-   }catch(e){alert(e.message)}
-  };
+  const copyAll=document.createElement("button");copyAll.className="copy-button";copyAll.textContent="▣ Copy All Saved Outputs";copyAll.disabled=true;
+  copyAll.onclick=async()=>{try{await copyText(getOutputText(box));copyAll.textContent="✓ सभी जवाब Copied!";setTimeout(()=>copyAll.textContent="▣ Copy All Saved Outputs",2000)}catch(e){alert(e.message)}};
   box.append(heading,topic,status,outputHeading,copyAll);
   (data.outputs||[]).forEach(output=>{
-   const section=document.createElement("div");section.className="project";
-   const title=output.title||output.output_type||"Agent Output";
-   const content=output.content||"";
+   const section=document.createElement("div");section.className="project";const title=output.title||output.output_type||"Agent Output";const content=output.content||"";
    const name=document.createElement("b");name.textContent=title;
-   const contentBox=document.createElement("div");contentBox.className="output";
-   contentBox.textContent=content;
-   contentBox.dataset.copyContent="true";contentBox.dataset.copyTitle=title;
-   const actions=document.createElement("div");actions.className="output-actions";
-   actions.appendChild(createCopyButton(content,"▣ Copy जवाब"));
+   const contentBox=document.createElement("div");contentBox.className="output";contentBox.textContent=content;contentBox.dataset.copyContent="true";contentBox.dataset.copyTitle=title;
+   const actions=document.createElement("div");actions.className="output-actions";actions.appendChild(createCopyButton(content,"▣ Copy जवाब"));
    section.append(name,contentBox,actions);box.appendChild(section);
   });
   updateCopyAllButton(box,copyAll);
   const latestJob=(data.jobs||[])[0];
-  if(latestJob){
-   currentProjectId=projectId;currentJobId=latestJob.id;
-   $("workflowCard").classList.remove("hidden");
-   await refreshWorkflow();
-  }
+  if(latestJob){currentProjectId=projectId;currentJobId=latestJob.id;$("workflowCard").classList.remove("hidden");await refreshWorkflow()}
  }catch(e){$("projectDetails").textContent=e.message}
 }
-
 $("refreshProjects").onclick=loadProjects;
 
-if("serviceWorker" in navigator){
- navigator.serviceWorker.register("/sw.js").catch(()=>{});
+// THUMBNAIL STUDIO LOGIC
+
+let thumbnailItems=[];
+let selectedThumbnail=null;
+let thumbnailImage=null;
+
+function wrapCanvasText(ctx,text,maxWidth){
+ const words=String(text||"").split(/\s+/).filter(Boolean);
+ const lines=[];let line="";
+ for(const word of words){
+  const test=line?line+" "+word:word;
+  if(ctx.measureText(test).width>maxWidth&&line){lines.push(line);line=word}
+  else line=test;
+ }
+ if(line)lines.push(line);
+ return lines;
 }
+
+function drawThumbnail(){
+ if(!selectedThumbnail||!thumbnailImage)return;
+ const canvas=$("thumbCanvas"),ctx=canvas.getContext("2d");
+ const W=1280,H=720;
+ ctx.clearRect(0,0,W,H);
+
+ const iw=thumbnailImage.naturalWidth||thumbnailImage.width;
+ const ih=thumbnailImage.naturalHeight||thumbnailImage.height;
+ const scale=Math.max(W/iw,H/ih);
+ const sw=W/scale,sh=H/scale;
+ const sx=(iw-sw)/2,sy=(ih-sh)/2;
+ ctx.drawImage(thumbnailImage,sx,sy,sw,sh,0,0,W,H);
+
+ const overlay=Number($("editOverlay").value)/100;
+ const pos=$("editPosition").value;
+ const align=$("editAlign").value;
+ const dark=ctx.createLinearGradient(pos==="right"?W:0,0,pos==="right"?0:W,0);
+ dark.addColorStop(0,`rgba(0,0,0,${Math.min(.88,overlay+0.18)})`);
+ dark.addColorStop(1,`rgba(0,0,0,${Math.max(0,overlay-0.15)})`);
+ ctx.fillStyle=dark;ctx.fillRect(0,0,W,H);
+
+ const headline=$("editHeadline").value.trim();
+ const subline=$("editSubline").value.trim();
+ const fontSize=Math.max(28,Math.min(110,Number($("editFontSize").value)||64));
+ const subSize=Math.max(16,Math.min(60,Number($("editSubSize").value)||30));
+ const margin=82;
+ let x=pos==="left"?margin:pos==="right"?W-margin:W/2;
+ let textAlign=align;
+ if(pos==="left"&&align==="center")textAlign="left";
+ if(pos==="right"&&align==="center")textAlign="right";
+ ctx.textAlign=textAlign;ctx.textBaseline="middle";
+ const maxWidth=pos==="center"?W-180:W*.65;
+
+ const headlineLines=[];
+ ctx.font=`900 ${fontSize}px system-ui, sans-serif`;
+ headlineLines.push(...wrapCanvasText(ctx,headline,maxWidth));
+ const subLines=[];
+ ctx.font=`700 ${subSize}px system-ui, sans-serif`;
+ subLines.push(...wrapCanvasText(ctx,subline,maxWidth));
+
+ const totalHeight=headlineLines.length*fontSize*1.18+subLines.length*subSize*1.35+12;
+ let y=(H-totalHeight)/2;
+ const outline=$("editOutline").checked,shadow=$("editShadow").checked;
+ ctx.lineJoin="round";
+ ctx.font=`900 ${fontSize}px system-ui, sans-serif`;
+ ctx.fillStyle=$("editHeadlineColor").value;
+ ctx.strokeStyle="rgba(0,0,0,.88)";ctx.lineWidth=outline?10:0;
+ ctx.shadowColor=shadow?"rgba(0,0,0,.8)":"transparent";
+ ctx.shadowBlur=shadow?16:0;ctx.shadowOffsetX=shadow?4:0;ctx.shadowOffsetY=shadow?5:0;
+
+ headlineLines.forEach(line=>{
+  if(outline)ctx.strokeText(line,x,y,maxWidth);
+  ctx.fillText(line,x,y,maxWidth);y+=fontSize*1.18;
+ });
+
+ if(subLines.length){
+  y+=8;ctx.font=`800 ${subSize}px system-ui, sans-serif`;
+  ctx.fillStyle=$("editAccentColor").value;
+  subLines.forEach(line=>{
+   if(outline)ctx.strokeText(line,x,y,maxWidth);
+   ctx.fillText(line,x,y,maxWidth);y+=subSize*1.35;
+  });
+ }
+ ctx.shadowColor="transparent";ctx.shadowBlur=0;ctx.shadowOffsetX=0;ctx.shadowOffsetY=0;
+}
+
+function selectThumbnail(item){
+ selectedThumbnail=item;
+ thumbnailImage=new Image();
+ thumbnailImage.onload=()=>{
+  $("thumbResults").classList.remove("hidden");
+  $("editHeadline").value=item.editable.headline||$("thumbHeadline").value;
+  $("editSubline").value=item.editable.subline||$("thumbSubline").value;
+  $("editHeadlineColor").value=item.editable.headlineColor||"#ffffff";
+  $("editAccentColor").value=item.editable.accentColor||"#ffcc00";
+  $("editFontSize").value=item.editable.fontSize||64;
+  $("editSubSize").value=item.editable.sublineSize||30;
+  $("editPosition").value=item.editable.headlinePosition||"left";
+  $("editAlign").value=item.editable.textAlign||"left";
+  $("editOutline").checked=item.editable.outline!==false;
+  $("editShadow").checked=item.editable.shadow!==false;
+  drawThumbnail();
+  renderThumbnailCards();
+ };
+ thumbnailImage.onerror=()=>setStatus("thumbStatus","Image load नहीं हो पाई। दोबारा generate करें।",true);
+ thumbnailImage.src=item.image;
+}
+
+function renderThumbnailCards(){
+ const box=$("thumbGallery");box.innerHTML="";
+ thumbnailItems.forEach(item=>{
+  if(!item.image){
+   const err=document.createElement("div");err.className="thumb-card";
+   err.innerHTML=`<b>${escapeHTML(item.name)}</b><p class="muted error">${escapeHTML(item.error||"Generation failed")}</p>`;
+   box.appendChild(err);return;
+  }
+  const card=document.createElement("div");
+  card.className="thumb-card"+(selectedThumbnail&&selectedThumbnail.id===item.id?" active":"");
+  const img=document.createElement("img");img.src=item.image;img.alt=item.name;
+  const name=document.createElement("b");name.textContent=item.name;
+  card.append(img,name);card.onclick=()=>selectThumbnail(item);box.appendChild(card);
+ });
+}
+
+$("thumbGenerate").onclick=async()=>{
+ const topic=$("thumbTopic").value.trim();
+ if(!topic){setStatus("thumbStatus","पहले वीडियो का विषय लिखो।",true);return}
+ if(topic.length>500){setStatus("thumbStatus","विषय 500 characters से छोटा रखो।",true);return}
+ const button=$("thumbGenerate");button.disabled=true;
+ setStatus("thumbStatus","AI 5 अलग-अलग thumbnail backgrounds बनाने की कोशिश कर रहा है। इसमें समय लग सकता है...");
+ try{
+  const data=await api("/api/thumbnails/generate",{
+   method:"POST",
+   body:JSON.stringify({
+    topic,
+    headline:$("thumbHeadline").value.trim(),
+    subline:$("thumbSubline").value.trim()
+   })
+  });
+  thumbnailItems=data.thumbnails||[];
+  if(!thumbnailItems.some(x=>x.image))throw new Error(data.message||"कोई thumbnail generate नहीं हुआ।");
+  $("thumbResults").classList.remove("hidden");
+  renderThumbnailCards();
+  const first=thumbnailItems.find(x=>x.image);
+  selectThumbnail(first);
+  setStatus("thumbStatus",`${data.successful} / ${data.total} backgrounds तैयार। किसी एक को चुनकर edit करो।`);
+ }catch(e){setStatus("thumbStatus",e.message,true)}
+ finally{button.disabled=false}
+};
+
+[
+ "editHeadline","editSubline","editHeadlineColor","editAccentColor",
+ "editFontSize","editSubSize","editPosition","editAlign","editOverlay",
+ "editOutline","editShadow"
+].forEach(id=>{
+ $(id).addEventListener("input",()=>{if(selectedThumbnail&&thumbnailImage)drawThumbnail()});
+ $(id).addEventListener("change",()=>{if(selectedThumbnail&&thumbnailImage)drawThumbnail()});
+});
+
+$("thumbHeadline").addEventListener("input",()=>{
+ if(selectedThumbnail){$("editHeadline").value=$("thumbHeadline").value;drawThumbnail()}
+});
+$("thumbSubline").addEventListener("input",()=>{
+ if(selectedThumbnail){$("editSubline").value=$("thumbSubline").value;drawThumbnail()}
+});
+$("thumbRedraw").onclick=drawThumbnail;
+
+$("thumbDownload").onclick=()=>{
+ if(!selectedThumbnail||!thumbnailImage){setStatus("thumbStatus","पहले thumbnail generate और select करो।",true);return}
+ drawThumbnail();
+ $("thumbCanvas").toBlob(blob=>{
+  if(!blob){setStatus("thumbStatus","JPG export नहीं हो पाया।",true);return}
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="Apna-Nazariya-Thumbnail-"+selectedThumbnail.id+".jpg";
+  document.body.appendChild(a);a.click();a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1500);
+  setStatus("thumbStatus","✓ Thumbnail JPG download शुरू हो गया।");
+ },"image/jpeg",.94);
+};
+
+if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").catch(()=>{})}
 checkLogin();
 </script>
 </body>
