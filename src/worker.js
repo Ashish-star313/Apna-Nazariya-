@@ -1,8 +1,9 @@
+
 const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
+
 const SESSION_DAYS = 14;
 const MAX_PROMPT_LENGTH = 12000;
-const MAX_OUTPUT_CONTEXT = 9000;
 
 const BASE_RULES = `
 तुम Apna Nazariya के अनुभवी Hindi YouTube Production Team हो।
@@ -18,15 +19,16 @@ Channel tagline: सोच अपनी, फैसला आपका।
 Editorial Rules:
 - तथ्य, राय, आरोप और अनुमान अलग-अलग बताओ।
 - कोई आंकड़ा, तारीख, बयान, स्रोत या घटना invent मत करो।
-- उपलब्ध जानकारी से सत्यापन संभव न हो तो UNVERIFIED लिखो।
-- किसी राजनीतिक दल या व्यक्ति पर बिना प्रमाण आरोप मत लगाओ।
-- Research में स्रोतों के नाम और URLs दो, लेकिन यह दावा मत करो कि URL खोलकर सत्यापन किया है।
+- सत्यापन संभव न हो तो UNVERIFIED लिखो।
+- बिना प्रमाण किसी राजनीतिक दल या व्यक्ति पर आरोप मत लगाओ।
+- Research में संभावित स्रोतों के नाम और URLs दो।
+- URL खोलकर सत्यापन करने का दावा मत करो।
 - पुरानी जानकारी को वर्तमान बताकर पेश मत करो।
-- Script में बोलने लायक भाषा हो, निबंध जैसी भाषा नहीं।
+- Script बोलने लायक हो, निबंध जैसी नहीं।
 - दोनों hosts को संतुलित बोलने का समय दो।
 - अंत में: सोच अपनी, फैसला आपका।
 
-कभी भी fabricated citations या fake statistics मत देना।
+कभी fabricated citations या fake statistics मत देना।
 `;
 
 const AGENTS = {
@@ -40,11 +42,11 @@ const AGENTS = {
   },
   "Competitor Intelligence": {
     role: "Competitor Analyst",
-    task: "दिए गए reference channels और topic के आधार पर content positioning, presentation patterns, gaps और differentiation strategy बताओ। बिना देखे किसी channel के बारे में specific claims मत करना।"
+    task: "Reference channels और topic के आधार पर content positioning, presentation patterns, gaps और differentiation strategy बताओ। बिना देखे specific claims मत करना।"
   },
   "Research & Fact Check": {
     role: "Research Editor",
-    task: "Topic के लिए research brief बनाओ। हर claim को VERIFIED FROM PROVIDED MATERIAL, NEEDS SOURCE या UNVERIFIED में classify करो। संभावित authoritative sources बताओ। कोई data invent मत करना।"
+    task: "Research brief बनाओ। हर claim को VERIFIED FROM PROVIDED MATERIAL, NEEDS SOURCE या UNVERIFIED में classify करो। संभावित authoritative sources बताओ। Data invent मत करो।"
   },
   "Human Scriptwriter": {
     role: "Hindi Scriptwriter",
@@ -56,11 +58,11 @@ const AGENTS = {
   },
   "Title Specialist": {
     role: "YouTube Title Editor",
-    task: "वीडियो के लिए 10 आकर्षक लेकिन ईमानदार titles बनाओ। Clickbait और misleading claims से बचो। Best title चुनकर कारण बताओ।"
+    task: "10 आकर्षक लेकिन ईमानदार titles बनाओ। Clickbait से बचो। Best title चुनकर कारण बताओ।"
   },
   "Thumbnail Designer": {
     role: "Thumbnail Creative Director",
-    task: "तीन अलग thumbnail concepts बनाओ। हर concept में मुख्य visual, headline, subline, subject placement, contrast और emotional angle बताओ।"
+    task: "तीन thumbnail concepts बनाओ। Visual, headline, subline, subject placement, contrast और emotional angle बताओ।"
   },
   "SEO Specialist": {
     role: "YouTube SEO Editor",
@@ -76,7 +78,7 @@ const AGENTS = {
   },
   "Editing Assistant": {
     role: "Video Editing Supervisor",
-    task: "दो अलग Android phones पर रिकॉर्ड हुए footage को synchronize और edit करने की step-by-step योजना दो। Timeline, cuts, B-roll, captions, audio cleanup, transitions, music levels और export settings बताओ। किसी app को खुद operate करने का दावा मत करना।"
+    task: "दो अलग Android phones पर रिकॉर्ड footage को synchronize और edit करने की step-by-step योजना दो। Timeline, cuts, B-roll, captions, audio cleanup, transitions, music levels और export settings बताओ। किसी app को खुद operate करने का दावा मत करना।"
   },
   "Publishing Assistant": {
     role: "Publishing Manager",
@@ -116,10 +118,10 @@ const corsHeaders = {
   "Content-Type": "application/json; charset=utf-8"
 };
 
-function json(data, status = 200) {
+function json(data, status = 200, extraHeaders = {}) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: corsHeaders
+    headers: { ...corsHeaders, ...extraHeaders }
   });
 }
 
@@ -161,6 +163,7 @@ function clearCookie() {
 function safeEqual(a, b) {
   if (typeof a !== "string" || typeof b !== "string") return false;
   if (a.length !== b.length) return false;
+
   let result = 0;
   for (let i = 0; i < a.length; i++) {
     result |= a.charCodeAt(i) ^ b.charCodeAt(i);
@@ -178,6 +181,8 @@ async function readBody(request) {
 }
 
 async function ensureSchema(env) {
+  if (!env.DB) throw new Error("D1 Database binding उपलब्ध नहीं है।");
+
   const statements = [
     `CREATE TABLE IF NOT EXISTS login_sessions (
       token_hash TEXT PRIMARY KEY,
@@ -259,28 +264,92 @@ async function requireAuth(request, env) {
   return await authenticate(request, env);
 }
 
+/*
+ * GEMMA 4 RESPONSE HANDLER
+ * Thinking mode बंद किया गया है।
+ * अलग-अलग response formats भी पढ़े जा सकते हैं।
+ */
 async function runModel(env, systemPrompt, userPrompt, maxTokens = 2200) {
-  if (!env.AI) throw new Error("Cloudflare AI binding उपलब्ध नहीं है।");
-
-  const result = await env.AI.run(MODEL, {
-    messages: [
-      { role: "system", content: systemPrompt },
-      { role: "user", content: userPrompt }
-    ],
-    max_tokens: maxTokens,
-    temperature: 0.65
-  });
-
-  let output = result?.response || result?.result?.response || "";
-
-  if (!output && typeof result === "string") output = result;
-  if (!output && result?.output_text) output = result.output_text;
-
-  if (!output || !String(output).trim()) {
-    throw new Error("AI से खाली जवाब मिला। दोबारा कोशिश करें।");
+  if (!env.AI) {
+    throw new Error("Cloudflare AI binding उपलब्ध नहीं है।");
   }
 
-  return String(output).trim();
+  let result;
+
+  try {
+    result = await env.AI.run(MODEL, {
+      messages: [
+        { role: "system", content: systemPrompt },
+        { role: "user", content: userPrompt }
+      ],
+      max_tokens: maxTokens,
+      temperature: 0.65,
+      chat_template_kwargs: {
+        enable_thinking: false
+      }
+    });
+  } catch (error) {
+    console.error("Workers AI execution error:", error);
+    throw new Error(
+      "Workers AI Error: " + String(error?.message || error)
+    );
+  }
+
+  function extractText(value) {
+    if (typeof value === "string") return value;
+
+    if (Array.isArray(value)) {
+      return value.map(item => {
+        if (typeof item === "string") return item;
+        if (typeof item?.text === "string") return item.text;
+        if (typeof item?.content === "string") return item.content;
+        return "";
+      }).filter(Boolean).join("\n");
+    }
+
+    if (value && typeof value === "object") {
+      if (typeof value.text === "string") return value.text;
+      if (typeof value.content === "string") return value.content;
+      if (typeof value.response === "string") return value.response;
+    }
+
+    return "";
+  }
+
+  let output = "";
+
+  if (typeof result === "string") {
+    output = result;
+  } else if (result && typeof result === "object") {
+    output =
+      extractText(result.response) ||
+      extractText(result.output_text) ||
+      extractText(result.text) ||
+      extractText(result.content) ||
+      extractText(result.result?.response) ||
+      extractText(result.choices?.[0]?.message?.content) ||
+      extractText(result.result?.choices?.[0]?.message?.content);
+  }
+
+  output = String(output || "").trim();
+
+  if (!output) {
+    let responseInfo = "Unknown response";
+
+    try {
+      responseInfo = JSON.stringify(result).slice(0, 1200);
+    } catch {
+      responseInfo = String(typeof result);
+    }
+
+    console.error("Workers AI empty response:", responseInfo);
+
+    throw new Error(
+      "AI ने खाली जवाब दिया। Model response details: " + responseInfo
+    );
+  }
+
+  return output;
 }
 
 async function getProfile(env) {
@@ -289,6 +358,7 @@ async function getProfile(env) {
   ).all();
 
   const profile = {};
+
   for (const row of rows.results || []) {
     profile[row.key] = row.value;
   }
@@ -337,7 +407,7 @@ async function saveProfile(env, body) {
 
 function chooseAgents(topic, requested) {
   if (Array.isArray(requested) && requested.length) {
-    return requested.filter(name => AGENTS[name]);
+    return [...new Set(requested.filter(name => AGENTS[name]))];
   }
   return DEFAULT_SEQUENCE;
 }
@@ -500,6 +570,7 @@ async function runNextStep(env, jobId) {
     ).bind(job.project_id).all();
 
     const profile = await getProfile(env);
+
     const prompt = buildAgentPrompt(
       next.agent_name,
       input,
@@ -521,8 +592,9 @@ async function runNextStep(env, jobId) {
     ).bind(output, timestamp, next.id).run();
 
     await env.DB.prepare(
-      `INSERT INTO project_outputs (id,project_id,agent_name,content,created_at)
-       VALUES (?,?,?,?,?)`
+      `INSERT INTO project_outputs
+      (id,project_id,agent_name,content,created_at)
+      VALUES (?,?,?,?,?)`
     ).bind(
       uuid(),
       job.project_id,
@@ -539,7 +611,11 @@ async function runNextStep(env, jobId) {
       "UPDATE workflow_jobs SET current_step=?,updated_at=? WHERE id=?"
     ).bind(completedCount.total, timestamp, jobId).run();
 
-    return { completed: false, agent: next.agent_name, output };
+    return {
+      completed: false,
+      agent: next.agent_name,
+      output
+    };
   } catch (error) {
     const message = String(error?.message || error);
 
@@ -598,9 +674,11 @@ Do not depict fabricated evidence or fake news screenshots.
       let imageData = result?.image || result?.data?.image || result;
 
       if (imageData instanceof Uint8Array) {
-        imageData = btoa(
-          Array.from(imageData, b => String.fromCharCode(b)).join("")
-        );
+        let binary = "";
+        for (let i = 0; i < imageData.length; i += 0x8000) {
+          binary += String.fromCharCode(...imageData.subarray(i, i + 0x8000));
+        }
+        imageData = btoa(binary);
       }
 
       if (typeof imageData === "string") {
@@ -612,6 +690,12 @@ Do not depict fabricated evidence or fake news screenshots.
             : `data:image/jpeg;base64,${imageData}`,
           headline,
           subline
+        });
+      } else {
+        thumbnails.push({
+          id: uuid(),
+          name: `Concept ${i + 1}`,
+          error: "Image response का format समझ नहीं आया।"
         });
       }
     } catch (error) {
@@ -640,7 +724,7 @@ async function handleApi(request, env) {
     return json({
       ok: true,
       service: "Apna Nazariya AI API",
-      version: "4.0"
+      version: "4.1"
     });
   }
 
@@ -663,7 +747,10 @@ async function handleApi(request, env) {
       !safeEqual(String(body.loginId || ""), env.APP_LOGIN_ID) ||
       !safeEqual(String(body.password || ""), env.APP_LOGIN_PASSWORD)
     ) {
-      return json({ ok: false, error: "गलत Login ID या Password।" }, 401);
+      return json(
+        { ok: false, error: "गलत Login ID या Password।" },
+        401
+      );
     }
 
     const token = randomToken();
@@ -676,12 +763,11 @@ async function handleApi(request, env) {
       "INSERT INTO login_sessions (token_hash,expires_at) VALUES (?,?)"
     ).bind(tokenHash, expires).run();
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: {
-        ...corsHeaders,
-        "Set-Cookie": cookieHeader(token)
-      }
-    });
+    return json(
+      { ok: true },
+      200,
+      { "Set-Cookie": cookieHeader(token) }
+    );
   }
 
   if (path === "/api/logout" && method === "POST") {
@@ -693,12 +779,11 @@ async function handleApi(request, env) {
       ).bind(await sha256(token)).run();
     }
 
-    return new Response(JSON.stringify({ ok: true }), {
-      headers: {
-        ...corsHeaders,
-        "Set-Cookie": clearCookie()
-      }
-    });
+    return json(
+      { ok: true },
+      200,
+      { "Set-Cookie": clearCookie() }
+    );
   }
 
   if (path === "/api/me" && method === "GET") {
@@ -711,7 +796,10 @@ async function handleApi(request, env) {
   }
 
   if (path === "/api/profile" && method === "GET") {
-    return json({ ok: true, profile: await getProfile(env) });
+    return json({
+      ok: true,
+      profile: await getProfile(env)
+    });
   }
 
   if (path === "/api/profile" && method === "POST") {
@@ -746,8 +834,12 @@ async function handleApi(request, env) {
     }
 
     const agents = chooseAgents(body.topic, body.agents);
+
     if (!agents.length) {
-      return json({ ok: false, error: "कोई valid agent चुना नहीं गया।" }, 400);
+      return json(
+        { ok: false, error: "कोई valid agent चुना नहीं गया।" },
+        400
+      );
     }
 
     const created = await createProject(env, body, agents);
@@ -775,6 +867,10 @@ async function handleApi(request, env) {
   if (path === "/api/workflow/resume" && method === "POST") {
     const body = await readBody(request);
 
+    if (!body.jobId) {
+      return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+    }
+
     await env.DB.prepare(
       "UPDATE agent_runs SET status='queued',error=NULL WHERE job_id=? AND status='error'"
     ).bind(body.jobId).run();
@@ -788,10 +884,16 @@ async function handleApi(request, env) {
 
   if (path === "/api/workflow/status" && method === "GET") {
     const jobId = url.searchParams.get("jobId");
-    if (!jobId) return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+
+    if (!jobId) {
+      return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+    }
 
     const status = await workflowStatus(env, jobId);
-    if (!status) return json({ ok: false, error: "Workflow नहीं मिला।" }, 404);
+
+    if (!status) {
+      return json({ ok: false, error: "Workflow नहीं मिला।" }, 404);
+    }
 
     return json({ ok: true, ...status });
   }
@@ -813,7 +915,9 @@ async function handleApi(request, env) {
       "SELECT * FROM projects WHERE id=?"
     ).bind(projectId).first();
 
-    if (!project) return json({ ok: false, error: "Project नहीं मिला।" }, 404);
+    if (!project) {
+      return json({ ok: false, error: "Project नहीं मिला।" }, 404);
+    }
 
     const outputs = await env.DB.prepare(
       "SELECT * FROM project_outputs WHERE project_id=? ORDER BY created_at ASC"
@@ -857,6 +961,8 @@ export default {
         headers: { "Content-Type": "text/plain; charset=utf-8" }
       });
     } catch (error) {
+      console.error("Apna Nazariya Worker Error:", error);
+
       return json({
         ok: false,
         error: String(error?.message || error)
