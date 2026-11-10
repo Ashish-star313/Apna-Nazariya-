@@ -1,7 +1,5 @@
-
 const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
-
 const SESSION_DAYS = 14;
 const MAX_PROMPT_LENGTH = 24000;
 const MAX_SOURCE_URLS = 5;
@@ -71,7 +69,9 @@ const ALLOWED_SOURCE_HOSTS = [
   "moef.gov.in", "prsindia.org", "cmie.com", "ilo.org",
   "worldbank.org", "imf.org", "un.org", "who.int", "cag.gov.in",
   "eci.gov.in", "sansad.in", "legislative.gov.in", "mha.gov.in",
-  "education.gov.in", "mohfw.gov.in", "ncrb.gov.in"
+  "education.gov.in", "mohfw.gov.in", "ncrb.gov.in",
+  "reuters.com", "apnews.com", "theguardian.com", "theprint.in",
+  "ft.com", "theverge.com", "investing.com", "marketscreener.com"
 ];
 
 const corsHeaders = {
@@ -82,878 +82,361 @@ const corsHeaders = {
 };
 
 function json(data, status = 200, extraHeaders = {}) {
-  return new Response(JSON.stringify(data), {
-    status,
-    headers: { ...corsHeaders, ...extraHeaders }
-  });
+  return new Response(JSON.stringify(data), { status, headers: { ...corsHeaders, ...extraHeaders } });
 }
-
 function now() { return new Date().toISOString(); }
 function uuid() { return crypto.randomUUID(); }
-
 function randomToken() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
   return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
 }
-
 async function sha256(value) {
-  const hash = await crypto.subtle.digest(
-    "SHA-256",
-    new TextEncoder().encode(value)
-  );
-  return Array.from(new Uint8Array(hash), b =>
-    b.toString(16).padStart(2, "0")
-  ).join("");
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(hash), b => b.toString(16).padStart(2, "0")).join("");
 }
-
 function cookieValue(request, name) {
   const cookie = request.headers.get("Cookie") || "";
-  const match = cookie.match(
-    new RegExp("(?:^|;\\s*)" + name + "=([^;]+)")
-  );
+  const match = cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]+)"));
   return match ? match[1] : null;
 }
-
 function cookieHeader(token, maxAge = SESSION_DAYS * 86400) {
   return `an_session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
 }
-
-function clearCookie() {
-  return "an_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
-}
-
+function clearCookie() { return "an_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0"; }
 function safeEqual(a, b) {
-  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) {
-    return false;
-  }
+  if (typeof a !== "string" || typeof b !== "string" || a.length !== b.length) return false;
   let result = 0;
-  for (let i = 0; i < a.length; i++) {
-    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
-  }
+  for (let i = 0; i < a.length; i++) result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   return result === 0;
 }
-
 async function readBody(request) {
-  try {
-    const body = await request.json();
-    return body && typeof body === "object" ? body : {};
-  } catch {
-    return {};
-  }
+  try { const body = await request.json(); return body && typeof body === "object" ? body : {}; }
+  catch { return {}; }
 }
 
-/* =========================================================
-   DATABASE SCHEMA + SAFE MIGRATIONS
-   Existing database/tables/data are preserved.
-========================================================= */
-
+/* DATABASE SCHEMA + SAFE ADDITIVE MIGRATIONS */
 async function ensureSchema(env) {
-  if (!env.DB) {
-    throw new Error("D1 Database binding उपलब्ध नहीं है।");
-  }
+  if (!env.DB) throw new Error("D1 Database binding उपलब्ध नहीं है।");
 
   const statements = [
-    `CREATE TABLE IF NOT EXISTS login_sessions (
-      token_hash TEXT PRIMARY KEY,
-      expires_at TEXT NOT NULL
-    )`,
-    `CREATE TABLE IF NOT EXISTS settings (
-      key TEXT PRIMARY KEY,
-      value TEXT
-    )`,
-    `CREATE TABLE IF NOT EXISTS channels (
-      id TEXT PRIMARY KEY,
-      url TEXT
-    )`,
+    `CREATE TABLE IF NOT EXISTS login_sessions (token_hash TEXT PRIMARY KEY, expires_at TEXT NOT NULL)`,
+    `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
+    `CREATE TABLE IF NOT EXISTS channels (id TEXT PRIMARY KEY, url TEXT)`,
     `CREATE TABLE IF NOT EXISTS projects (
-      id TEXT PRIMARY KEY,
-      title TEXT NOT NULL DEFAULT '',
-      topic TEXT NOT NULL DEFAULT '',
-      status TEXT,
-      created_at TEXT,
-      updated_at TEXT,
-      input_json TEXT
+      id TEXT PRIMARY KEY, title TEXT NOT NULL DEFAULT '', topic TEXT NOT NULL DEFAULT '',
+      status TEXT, created_at TEXT, updated_at TEXT, input_json TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS workflow_jobs (
-      id TEXT PRIMARY KEY,
-      project_id TEXT,
-      status TEXT,
-      current_step INTEGER DEFAULT 0,
-      total_steps INTEGER DEFAULT 0,
-      error TEXT,
-      created_at TEXT,
-      updated_at TEXT
+      id TEXT PRIMARY KEY, project_id TEXT NOT NULL, status TEXT NOT NULL DEFAULT 'queued',
+      current_step INTEGER NOT NULL DEFAULT 0, total_steps INTEGER NOT NULL DEFAULT 0,
+      input_json TEXT NOT NULL DEFAULT '{}', error TEXT,
+      created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
     )`,
     `CREATE TABLE IF NOT EXISTS agent_runs (
-      id TEXT PRIMARY KEY,
-      job_id TEXT,
-      project_id TEXT,
-      agent_name TEXT,
-      status TEXT,
-      output TEXT,
-      error TEXT,
-      created_at TEXT,
-      updated_at TEXT
+      id TEXT PRIMARY KEY, job_id TEXT, project_id TEXT, agent_name TEXT,
+      status TEXT, output TEXT, error TEXT, created_at TEXT, updated_at TEXT
     )`,
     `CREATE TABLE IF NOT EXISTS project_outputs (
-      id TEXT PRIMARY KEY,
-      project_id TEXT,
-      agent_name TEXT,
-      content TEXT,
-      created_at TEXT
+      id TEXT PRIMARY KEY, project_id TEXT, agent_name TEXT, content TEXT, created_at TEXT
     )`
   ];
+  for (const sql of statements) await env.DB.prepare(sql).run();
 
-  for (const sql of statements) {
-    await env.DB.prepare(sql).run();
+  // Projects: preserve existing records and add only missing columns.
+  const pInfo = await env.DB.prepare("PRAGMA table_info(projects)").all();
+  const pCols = new Set((pInfo.results || []).map(c => c.name));
+  const pMigrations = [
+    ["title", "TEXT NOT NULL DEFAULT ''"],
+    ["topic", "TEXT NOT NULL DEFAULT ''"],
+    ["status", "TEXT"],
+    ["created_at", "TEXT"],
+    ["updated_at", "TEXT"],
+    ["input_json", "TEXT"]
+  ];
+  for (const [col, def] of pMigrations) {
+    if (!pCols.has(col)) await env.DB.prepare(`ALTER TABLE projects ADD COLUMN ${col} ${def}`).run();
   }
+  await env.DB.prepare(`UPDATE projects SET title=COALESCE(NULLIF(title,''),NULLIF(topic,''),'Untitled Project') WHERE title IS NULL OR title=''`).run();
+  await env.DB.prepare(`UPDATE projects SET topic=COALESCE(NULLIF(topic,''),NULLIF(title,''),'Untitled Project') WHERE topic IS NULL OR topic=''`).run();
 
-  // पुराने projects table के columns की जाँच।
-  const projectColumns = await env.DB
-    .prepare("PRAGMA table_info(projects)")
-    .all();
-
-  const columnNames = new Set(
-    (projectColumns.results || []).map(col => col.name)
-  );
-
-  // Missing title column को सुरक्षित रूप से जोड़ें।
-  if (!columnNames.has("title")) {
-    await env.DB.prepare(
-      "ALTER TABLE projects ADD COLUMN title TEXT NOT NULL DEFAULT ''"
-    ).run();
+  // workflow_jobs: older installations may have error_message instead of error,
+  // and may not have input_json / total_steps. Keep legacy columns untouched.
+  const wInfo = await env.DB.prepare("PRAGMA table_info(workflow_jobs)").all();
+  const wCols = new Set((wInfo.results || []).map(c => c.name));
+  const wMigrations = [
+    ["project_id", "TEXT"],
+    ["status", "TEXT NOT NULL DEFAULT 'queued'"],
+    ["current_step", "INTEGER NOT NULL DEFAULT 0"],
+    ["total_steps", "INTEGER NOT NULL DEFAULT 0"],
+    ["input_json", "TEXT NOT NULL DEFAULT '{}'"],
+    ["error", "TEXT"],
+    ["created_at", "TEXT"],
+    ["updated_at", "TEXT"]
+  ];
+  for (const [col, def] of wMigrations) {
+    if (!wCols.has(col)) await env.DB.prepare(`ALTER TABLE workflow_jobs ADD COLUMN ${col} ${def}`).run();
   }
-
-  if (!columnNames.has("topic")) {
-    await env.DB.prepare(
-      "ALTER TABLE projects ADD COLUMN topic TEXT NOT NULL DEFAULT ''"
-    ).run();
-  }
-
-  if (!columnNames.has("input_json")) {
-    await env.DB.prepare(
-      "ALTER TABLE projects ADD COLUMN input_json TEXT"
-    ).run();
-  }
-
-  // पुराने projects में title खाली हो तो topic से भरें।
-  await env.DB.prepare(
-    `UPDATE projects
-     SET title = COALESCE(NULLIF(title, ''), NULLIF(topic, ''), 'Untitled Project')
-     WHERE title IS NULL OR title = ''`
-  ).run();
-
-  // पुराने projects में topic खाली हो तो title से भरें।
-  await env.DB.prepare(
-    `UPDATE projects
-     SET topic = COALESCE(NULLIF(topic, ''), NULLIF(title, ''), 'Untitled Project')
-     WHERE topic IS NULL OR topic = ''`
-  ).run();
+  await env.DB.prepare(`UPDATE workflow_jobs SET input_json='{}' WHERE input_json IS NULL OR input_json=''`).run();
+  await env.DB.prepare(`UPDATE workflow_jobs SET created_at=COALESCE(created_at,CURRENT_TIMESTAMP), updated_at=COALESCE(updated_at,CURRENT_TIMESTAMP)`).run();
 }
 
-/* =========================================================
-   AUTHENTICATION
-========================================================= */
-
+/* AUTHENTICATION */
 async function authenticate(request, env) {
   const token = cookieValue(request, "an_session");
   if (!token) return false;
-
   const tokenHash = await sha256(token);
-
-  const row = await env.DB.prepare(
-    "SELECT token_hash, expires_at FROM login_sessions WHERE token_hash=?"
-  ).bind(tokenHash).first();
-
+  const row = await env.DB.prepare("SELECT token_hash, expires_at FROM login_sessions WHERE token_hash=?").bind(tokenHash).first();
   if (!row) return false;
-
   if (new Date(row.expires_at).getTime() < Date.now()) {
-    await env.DB.prepare(
-      "DELETE FROM login_sessions WHERE token_hash=?"
-    ).bind(tokenHash).run();
+    await env.DB.prepare("DELETE FROM login_sessions WHERE token_hash=?").bind(tokenHash).run();
     return false;
   }
-
   return true;
 }
 
-/* =========================================================
-   AI MODEL
-========================================================= */
-
+/* AI MODEL */
 async function runModel(env, systemPrompt, userPrompt, maxTokens = 2400) {
-  if (!env.AI) {
-    throw new Error("Cloudflare AI binding उपलब्ध नहीं है।");
-  }
-
+  if (!env.AI) throw new Error("Cloudflare AI binding उपलब्ध नहीं है।");
   let result;
-
   try {
     result = await env.AI.run(MODEL, {
-      messages: [
-        { role: "system", content: systemPrompt },
-        { role: "user", content: userPrompt }
-      ],
-      max_tokens: maxTokens,
-      temperature: 0.55,
+      messages: [{ role: "system", content: systemPrompt }, { role: "user", content: userPrompt }],
+      max_tokens: maxTokens, temperature: 0.55,
       chat_template_kwargs: { enable_thinking: false }
     });
   } catch (error) {
     console.error("Workers AI execution error:", error);
-    throw new Error(
-      "Workers AI Error: " + String(error?.message || error)
-    );
+    throw new Error("Workers AI Error: " + String(error?.message || error));
   }
-
   function extractText(value) {
     if (typeof value === "string") return value;
-
-    if (Array.isArray(value)) {
-      return value.map(item => {
-        if (typeof item === "string") return item;
-        if (typeof item?.text === "string") return item.text;
-        if (typeof item?.content === "string") return item.content;
-        return "";
-      }).filter(Boolean).join("\n");
-    }
-
+    if (Array.isArray(value)) return value.map(item => typeof item === "string" ? item : (item?.text || item?.content || "")).filter(Boolean).join("\n");
     if (value && typeof value === "object") {
-      for (const key of ["text", "content", "response", "output_text"]) {
-        if (typeof value[key] === "string") return value[key];
-      }
-
-      if (Array.isArray(value.content)) {
-        return extractText(value.content);
-      }
+      for (const key of ["text", "content", "response", "output_text"]) if (typeof value[key] === "string") return value[key];
+      if (Array.isArray(value.content)) return extractText(value.content);
     }
-
     return "";
   }
-
   let output = typeof result === "string" ? result :
-    extractText(result?.response) ||
-    extractText(result?.output_text) ||
-    extractText(result?.text) ||
-    extractText(result?.content) ||
+    extractText(result?.response) || extractText(result?.output_text) ||
+    extractText(result?.text) || extractText(result?.content) ||
     extractText(result?.result?.response) ||
     extractText(result?.choices?.[0]?.message?.content) ||
     extractText(result?.result?.choices?.[0]?.message?.content);
-
   output = String(output || "").trim();
-
   if (!output) {
     let info = "Unknown response";
-    try {
-      info = JSON.stringify(result).slice(0, 1000);
-    } catch {}
-
+    try { info = JSON.stringify(result).slice(0, 1000); } catch {}
     console.error("Workers AI empty response:", info);
     throw new Error("AI ने खाली जवाब दिया। Model response: " + info);
   }
-
   return output;
 }
 
-/* =========================================================
-   CREATOR PROFILE
-========================================================= */
-
+/* CREATOR PROFILE */
 async function getProfile(env) {
-  const rows = await env.DB.prepare(
-    "SELECT key,value FROM settings"
-  ).all();
-
+  const rows = await env.DB.prepare("SELECT key,value FROM settings").all();
   const profile = {};
-
-  for (const row of rows.results || []) {
-    profile[row.key] = row.value;
-  }
-
-  const channels = await env.DB.prepare(
-    "SELECT url FROM channels"
-  ).all();
-
+  for (const row of rows.results || []) profile[row.key] = row.value;
+  const channels = await env.DB.prepare("SELECT url FROM channels").all();
   profile.referenceChannels = (channels.results || []).map(x => x.url);
-
   return profile;
 }
-
 async function saveProfile(env, body) {
-  const allowed = [
-    "creatorVoice", "hostOne", "hostTwo", "channelName",
-    "tagline", "language", "extraRules"
-  ];
-
+  const allowed = ["creatorVoice", "hostOne", "hostTwo", "channelName", "tagline", "language", "extraRules"];
   for (const key of allowed) {
     if (body[key] !== undefined) {
-      await env.DB.prepare(
-        "INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)"
-      ).bind(key, String(body[key]).slice(0, 5000)).run();
+      await env.DB.prepare("INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)").bind(key, String(body[key]).slice(0, 5000)).run();
     }
   }
-
   if (Array.isArray(body.referenceChannels)) {
     await env.DB.prepare("DELETE FROM channels").run();
-
     for (const url of body.referenceChannels.slice(0, 20)) {
-      if (typeof url === "string" && url.trim()) {
-        await env.DB.prepare(
-          "INSERT INTO channels (id,url) VALUES (?,?)"
-        ).bind(uuid(), url.trim().slice(0, 500)).run();
-      }
+      if (typeof url === "string" && url.trim()) await env.DB.prepare("INSERT INTO channels (id,url) VALUES (?,?)").bind(uuid(), url.trim().slice(0, 500)).run();
     }
   }
-
   return getProfile(env);
 }
-
 function chooseAgents(requested) {
-  if (Array.isArray(requested) && requested.length) {
-    return [...new Set(requested.filter(name => AGENTS[name]))];
-  }
-
+  if (Array.isArray(requested) && requested.length) return [...new Set(requested.filter(name => AGENTS[name]))];
   return DEFAULT_SEQUENCE;
 }
 
-/* =========================================================
-   AGENT PROMPT
-========================================================= */
-
-function buildAgentPrompt(
-  agentName,
-  input,
-  previousOutputs,
-  profile,
-  sourceMaterial = ""
-) {
+/* AGENT PROMPT */
+function buildAgentPrompt(agentName, input, previousOutputs, profile, sourceMaterial = "") {
   const agent = AGENTS[agentName];
-
-  const previous = previousOutputs.slice(-6)
-    .map(x => `\n\n### ${x.agent_name}\n${x.content}`)
-    .join("\n");
-
+  const previous = previousOutputs.slice(-6).map(x => `\n\n### ${x.agent_name}\n${x.content}`).join("\n");
   return `
 PROJECT TOPIC:
 ${input.topic || "विषय उपलब्ध नहीं"}
-
 VIDEO FORMAT: ${input.format || "Long video"}
 TARGET DURATION: ${input.duration || "8-10 मिनट"}
 EXTRA INSTRUCTIONS: ${input.instructions || "कोई अतिरिक्त निर्देश नहीं"}
-
 CREATOR PROFILE:
 ${JSON.stringify(profile || {})}
-
 REFERENCE CHANNELS:
 ${(profile?.referenceChannels || []).join("\n")}
-
 SOURCE MATERIAL (provided URLs से प्राप्त सामग्री; इसे ही उपलब्ध evidence मानो):
 ${sourceMaterial || "इस workflow में कोई source URL उपलब्ध नहीं कराया गया। किसी claim को verified मत बताना।"}
-
 PREVIOUS WORK:
 ${previous || "यह पहला चरण है।"}
-
 CURRENT AGENT: ${agentName}
 AGENT ROLE: ${agent.role}
 TASK: ${agent.task}
-
 Output में fact/opinion/allegation/assumption अलग रखो। यदि source text में page/table number उपलब्ध नहीं है तो page/table number मत बनाओ।
 ${BASE_RULES}
 `;
 }
 
-/* =========================================================
-   SOURCE FETCHING
-========================================================= */
-
+/* SOURCE FETCHING */
 function isAllowedHost(host) {
-  return ALLOWED_SOURCE_HOSTS.some(
-    domain => host === domain || host.endsWith("." + domain)
-  );
+  return ALLOWED_SOURCE_HOSTS.some(domain => host === domain || host.endsWith("." + domain));
 }
-
 async function fetchSourceAsMarkdown(env, rawUrl) {
   let parsed;
-
-  try {
-    parsed = new URL(rawUrl);
-  } catch {
-    throw new Error("Invalid URL: " + rawUrl);
-  }
-
-  if (parsed.protocol !== "https:") {
-    throw new Error("केवल HTTPS source URLs स्वीकार हैं: " + rawUrl);
-  }
-
-  if (!isAllowedHost(parsed.hostname.toLowerCase())) {
-    throw new Error(
-      "यह source domain allowlist में नहीं है: " +
-      parsed.hostname + ". Official domain allowlist में ही URL दें।"
-    );
-  }
-
-  if (parsed.username || parsed.password) {
-    throw new Error("URL में username/password स्वीकार नहीं हैं।");
-  }
-
+  try { parsed = new URL(rawUrl); } catch { throw new Error("Invalid URL: " + rawUrl); }
+  if (parsed.protocol !== "https:") throw new Error("केवल HTTPS source URLs स्वीकार हैं: " + rawUrl);
+  if (!isAllowedHost(parsed.hostname.toLowerCase())) throw new Error("यह source domain allowlist में नहीं है: " + parsed.hostname);
+  if (parsed.username || parsed.password) throw new Error("URL में username/password स्वीकार नहीं हैं।");
   const response = await fetch(parsed.toString(), {
-    method: "GET",
-    redirect: "manual",
-    headers: {
-      "User-Agent": "ApnaNazariyaResearchBot/1.0",
-      "Accept": "text/html,application/pdf,text/plain,application/json"
-    }
+    method: "GET", redirect: "manual",
+    headers: { "User-Agent": "ApnaNazariyaResearchBot/1.0", "Accept": "text/html,application/pdf,text/plain,application/json" }
   });
-
-  if (response.status >= 300 && response.status < 400) {
-    throw new Error(
-      "Source redirect हुआ; सुरक्षा के लिए redirect follow नहीं किया: " + rawUrl
-    );
-  }
-
-  if (!response.ok) {
-    throw new Error(`Source fetch failed (${response.status}): ${rawUrl}`);
-  }
-
-  const contentType = (
-    response.headers.get("content-type") || ""
-  ).toLowerCase();
-
-  if (!/(application\/pdf|text\/html|application\/xhtml\+xml|text\/plain|application\/json)/.test(contentType)) {
-    throw new Error(
-      "Unsupported content type (" + contentType + "): " + rawUrl
-    );
-  }
-
-  const declaredLength = Number(
-    response.headers.get("content-length") || 0
-  );
-
-  if (declaredLength > MAX_SOURCE_BYTES) {
-    throw new Error("Source file 8 MB से बड़ा है: " + rawUrl);
-  }
-
+  if (response.status >= 300 && response.status < 400) throw new Error("Source redirect हुआ; सुरक्षा के लिए redirect follow नहीं किया: " + rawUrl);
+  if (!response.ok) throw new Error(`Source fetch failed (${response.status}): ${rawUrl}`);
+  const contentType = (response.headers.get("content-type") || "").toLowerCase();
+  if (!/(application\/pdf|text\/html|application\/xhtml\+xml|text\/plain|application\/json)/.test(contentType)) throw new Error("Unsupported content type (" + contentType + "): " + rawUrl);
+  const declaredLength = Number(response.headers.get("content-length") || 0);
+  if (declaredLength > MAX_SOURCE_BYTES) throw new Error("Source file 8 MB से बड़ा है: " + rawUrl);
   const buffer = await response.arrayBuffer();
-
-  if (buffer.byteLength > MAX_SOURCE_BYTES) {
-    throw new Error("Source file 8 MB से बड़ा है: " + rawUrl);
-  }
-
+  if (buffer.byteLength > MAX_SOURCE_BYTES) throw new Error("Source file 8 MB से बड़ा है: " + rawUrl);
   let markdown = "";
-
-  if (
-    contentType.includes("application/pdf") ||
-    contentType.includes("text/html") ||
-    contentType.includes("xhtml")
-  ) {
-    if (!env.AI || typeof env.AI.toMarkdown !== "function") {
-      throw new Error(
-        "इस account के AI binding में toMarkdown उपलब्ध नहीं है।"
-      );
-    }
-
-    const blob = new Blob(
-      [buffer],
-      { type: contentType.split(";")[0] }
-    );
-
-    const converted = await env.AI.toMarkdown({
-      name: parsed.pathname.split("/").pop() || "source",
-      blob
-    });
-
-    if (converted?.error) {
-      throw new Error("Document conversion failed: " + converted.error);
-    }
-
-    markdown = Array.isArray(converted)
-      ? converted.map(x => x.data || "").join("\n")
-      : String(converted?.data || converted?.text || "");
+  if (contentType.includes("application/pdf") || contentType.includes("text/html") || contentType.includes("xhtml")) {
+    if (!env.AI || typeof env.AI.toMarkdown !== "function") throw new Error("इस account के AI binding में toMarkdown उपलब्ध नहीं है।");
+    const blob = new Blob([buffer], { type: contentType.split(";")[0] });
+    const converted = await env.AI.toMarkdown({ name: parsed.pathname.split("/").pop() || "source", blob });
+    if (converted?.error) throw new Error("Document conversion failed: " + converted.error);
+    markdown = Array.isArray(converted) ? converted.map(x => x.data || "").join("\n") : String(converted?.data || converted?.text || "");
   } else {
     markdown = new TextDecoder().decode(buffer);
   }
-
   markdown = markdown.trim().slice(0, MAX_SOURCE_TEXT);
-
-  if (!markdown) {
-    throw new Error("Source से readable text नहीं मिला: " + rawUrl);
-  }
-
-  return {
-    url: parsed.toString(),
-    title:
-      response.headers.get("x-document-title") ||
-      parsed.pathname.split("/").pop() ||
-      parsed.hostname,
-    contentType,
-    text: markdown
-  };
+  if (!markdown) throw new Error("Source से readable text नहीं मिला: " + rawUrl);
+  return { url: parsed.toString(), title: response.headers.get("x-document-title") || parsed.pathname.split("/").pop() || parsed.hostname, contentType, text: markdown };
 }
-
 async function collectSources(env, urls) {
-  const clean = [...new Set(
-    (Array.isArray(urls) ? urls : [])
-      .filter(x => typeof x === "string" && x.trim())
-      .map(x => x.trim())
-  )].slice(0, MAX_SOURCE_URLS);
-
-  const sources = [];
-  const errors = [];
-
+  const clean = [...new Set((Array.isArray(urls) ? urls : []).filter(x => typeof x === "string" && x.trim()).map(x => x.trim()))].slice(0, MAX_SOURCE_URLS);
+  const sources = [], errors = [];
   for (const url of clean) {
-    try {
-      sources.push(await fetchSourceAsMarkdown(env, url));
-    } catch (error) {
-      errors.push({
-        url,
-        error: String(error?.message || error)
-      });
-    }
+    try { sources.push(await fetchSourceAsMarkdown(env, url)); }
+    catch (error) { errors.push({ url, error: String(error?.message || error) }); }
   }
-
   return { sources, errors };
 }
-
 function sourceContext(result) {
   if (!result?.sources?.length) return "";
-
-  return result.sources.map((s, i) =>
-    `SOURCE ${i + 1}
-Title: ${s.title}
-URL: ${s.url}
-Content type: ${s.contentType}
-Extracted text:
-${s.text}`
-  ).join("\n\n---\n\n").slice(0, MAX_SOURCE_TEXT * 2);
+  return result.sources.map((s, i) => `SOURCE ${i + 1}\nTitle: ${s.title}\nURL: ${s.url}\nContent type: ${s.contentType}\nExtracted text:\n${s.text}`).join("\n\n---\n\n").slice(0, MAX_SOURCE_TEXT * 2);
 }
 
-/* =========================================================
-   PROJECT CREATION — FIXED
-   title is now always inserted.
-========================================================= */
-
+/* PROJECT + WORKFLOW CREATION: include input_json in BOTH tables */
 async function createProject(env, input, agents) {
-  const projectId = uuid();
-  const jobId = uuid();
-  const timestamp = now();
+  const projectId = uuid(), jobId = uuid(), timestamp = now();
+  const projectTitle = String(input.title || input.projectTitle || input.topic || "Untitled Project").trim().slice(0, 500) || "Untitled Project";
+  const projectTopic = String(input.topic || projectTitle).trim().slice(0, 500) || projectTitle;
+  const inputJson = JSON.stringify({ ...input, title: projectTitle, topic: projectTopic });
 
-  // Frontend title न भेजे तो topic को title बनाया जाएगा।
-  const projectTitle = String(
-    input.title || input.projectTitle || input.topic || "Untitled Project"
-  ).trim().slice(0, 500) || "Untitled Project";
+  await env.DB.prepare(`INSERT INTO projects (id,title,topic,status,created_at,updated_at,input_json) VALUES (?,?,?,?,?,?,?)`)
+    .bind(projectId, projectTitle, projectTopic, "running", timestamp, timestamp, inputJson).run();
 
-  const projectTopic = String(
-    input.topic || projectTitle
-  ).trim().slice(0, 500) || projectTitle;
-
-  await env.DB.prepare(
-    `INSERT INTO projects
-    (id, title, topic, status, created_at, updated_at, input_json)
-    VALUES (?, ?, ?, ?, ?, ?, ?)`
-  ).bind(
-    projectId,
-    projectTitle,
-    projectTopic,
-    "running",
-    timestamp,
-    timestamp,
-    JSON.stringify(input)
-  ).run();
-
-  await env.DB.prepare(
-    `INSERT INTO workflow_jobs
-    (id, project_id, status, current_step, total_steps, error, created_at, updated_at)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
-  ).bind(
-    jobId,
-    projectId,
-    "queued",
-    0,
-    agents.length,
-    null,
-    timestamp,
-    timestamp
-  ).run();
+  await env.DB.prepare(`INSERT INTO workflow_jobs (id,project_id,status,current_step,total_steps,input_json,error,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)`)
+    .bind(jobId, projectId, "queued", 0, agents.length, inputJson, null, timestamp, timestamp).run();
 
   for (const name of agents) {
-    await env.DB.prepare(
-      `INSERT INTO agent_runs
-      (id, job_id, project_id, agent_name, status, output, error, created_at, updated_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(
-      uuid(),
-      jobId,
-      projectId,
-      name,
-      "queued",
-      null,
-      null,
-      timestamp,
-      timestamp
-    ).run();
+    await env.DB.prepare(`INSERT INTO agent_runs (id,job_id,project_id,agent_name,status,output,error,created_at,updated_at) VALUES (?,?,?,?,?,?,?,?,?)`)
+      .bind(uuid(), jobId, projectId, name, "queued", null, null, timestamp, timestamp).run();
   }
-
   return { projectId, jobId };
 }
 
-/* =========================================================
-   WORKFLOW STATUS
-========================================================= */
-
+/* WORKFLOW STATUS */
 async function workflowStatus(env, jobId) {
-  const job = await env.DB.prepare(
-    "SELECT * FROM workflow_jobs WHERE id=?"
-  ).bind(jobId).first();
-
+  const job = await env.DB.prepare("SELECT * FROM workflow_jobs WHERE id=?").bind(jobId).first();
   if (!job) return null;
-
-  const runs = await env.DB.prepare(
-    "SELECT * FROM agent_runs WHERE job_id=? ORDER BY rowid ASC"
-  ).bind(jobId).all();
-
-  return {
-    job,
-    agents: runs.results || []
-  };
+  const runs = await env.DB.prepare("SELECT * FROM agent_runs WHERE job_id=? ORDER BY rowid ASC").bind(jobId).all();
+  return { job, agents: runs.results || [] };
 }
 
-/* =========================================================
-   RUN NEXT AGENT
-========================================================= */
-
+/* RUN NEXT AGENT */
 async function runNextStep(env, jobId) {
-  const job = await env.DB.prepare(
-    "SELECT * FROM workflow_jobs WHERE id=?"
-  ).bind(jobId).first();
+  const job = await env.DB.prepare("SELECT * FROM workflow_jobs WHERE id=?").bind(jobId).first();
+  if (!job) throw new Error("Workflow नहीं मिला।");
+  if (job.status === "completed") return { completed: true };
+  if (job.status === "needs_review") return { completed: false, needsReview: true, decision: "HOLD" };
 
-  if (!job) {
-    throw new Error("Workflow नहीं मिला।");
-  }
-
-  if (job.status === "completed") {
-    return { completed: true };
-  }
-
-  if (job.status === "needs_review") {
-    return {
-      completed: false,
-      needsReview: true,
-      decision: "HOLD"
-    };
-  }
-
-  const next = await env.DB.prepare(
-    `SELECT * FROM agent_runs
-     WHERE job_id=? AND status='queued'
-     ORDER BY rowid ASC LIMIT 1`
-  ).bind(jobId).first();
-
+  const next = await env.DB.prepare(`SELECT * FROM agent_runs WHERE job_id=? AND status='queued' ORDER BY rowid ASC LIMIT 1`).bind(jobId).first();
   if (!next) {
-    await env.DB.prepare(
-      "UPDATE workflow_jobs SET status='completed',updated_at=? WHERE id=?"
-    ).bind(now(), jobId).run();
-
-    await env.DB.prepare(
-      "UPDATE projects SET status='completed',updated_at=? WHERE id=?"
-    ).bind(now(), job.project_id).run();
-
+    await env.DB.prepare("UPDATE workflow_jobs SET status='completed',updated_at=? WHERE id=?").bind(now(), jobId).run();
+    await env.DB.prepare("UPDATE projects SET status='completed',updated_at=? WHERE id=?").bind(now(), job.project_id).run();
     return { completed: true };
   }
 
-  await env.DB.prepare(
-    "UPDATE workflow_jobs SET status='running',error=NULL,updated_at=? WHERE id=?"
-  ).bind(now(), jobId).run();
-
-  await env.DB.prepare(
-    "UPDATE agent_runs SET status='running',error=NULL,updated_at=? WHERE id=?"
-  ).bind(now(), next.id).run();
+  await env.DB.prepare("UPDATE workflow_jobs SET status='running',error=NULL,updated_at=? WHERE id=?").bind(now(), jobId).run();
+  await env.DB.prepare("UPDATE agent_runs SET status='running',error=NULL,updated_at=? WHERE id=?").bind(now(), next.id).run();
 
   try {
-    const project = await env.DB.prepare(
-      "SELECT * FROM projects WHERE id=?"
-    ).bind(job.project_id).first();
-
-    const input = JSON.parse(project.input_json || "{}");
-
-    const previous = await env.DB.prepare(
-      `SELECT agent_name,content FROM project_outputs
-       WHERE project_id=? ORDER BY created_at ASC`
-    ).bind(job.project_id).all();
-
+    const project = await env.DB.prepare("SELECT * FROM projects WHERE id=?").bind(job.project_id).first();
+    const input = JSON.parse(project.input_json || job.input_json || "{}");
+    const previous = await env.DB.prepare("SELECT agent_name,content FROM project_outputs WHERE project_id=? ORDER BY created_at ASC").bind(job.project_id).all();
     const profile = await getProfile(env);
-
     let sources = input.sourceMaterial || "";
-
-    if (
-      [
-        "Research & Source Collector",
-        "Independent Fact Checker",
-        "Research & Fact Check"
-      ].includes(next.agent_name) &&
-      Array.isArray(input.sourceUrls) &&
-      input.sourceUrls.length
-    ) {
+    if (["Research & Source Collector", "Independent Fact Checker", "Research & Fact Check"].includes(next.agent_name) && Array.isArray(input.sourceUrls) && input.sourceUrls.length) {
       const fetched = await collectSources(env, input.sourceUrls);
-
       sources = sourceContext(fetched);
-
-      if (fetched.errors.length) {
-        sources += "\n\nSOURCE FETCH ERRORS:\n" +
-          JSON.stringify(fetched.errors, null, 2);
-      }
-
-      if (!sources) {
-        sources = "कोई source पढ़ा नहीं जा सका। Errors: " +
-          JSON.stringify(fetched.errors);
-      }
+      if (fetched.errors.length) sources += "\n\nSOURCE FETCH ERRORS:\n" + JSON.stringify(fetched.errors, null, 2);
+      if (!sources) sources = "कोई source पढ़ा नहीं जा सका। Errors: " + JSON.stringify(fetched.errors);
     }
-
-    const prompt = buildAgentPrompt(
-      next.agent_name,
-      input,
-      previous.results || [],
-      profile,
-      sources
-    );
-
-    const output = await runModel(
-      env,
-      BASE_RULES,
-      prompt.slice(0, MAX_PROMPT_LENGTH),
-      3200
-    );
-
+    const prompt = buildAgentPrompt(next.agent_name, input, previous.results || [], profile, sources);
+    const output = await runModel(env, BASE_RULES, prompt.slice(0, MAX_PROMPT_LENGTH), 3200);
     const timestamp = now();
 
-    await env.DB.prepare(
-      "UPDATE agent_runs SET status='completed',output=?,updated_at=? WHERE id=?"
-    ).bind(output, timestamp, next.id).run();
+    await env.DB.prepare("UPDATE agent_runs SET status='completed',output=?,updated_at=? WHERE id=?").bind(output, timestamp, next.id).run();
+    await env.DB.prepare("INSERT INTO project_outputs (id,project_id,agent_name,content,created_at) VALUES (?,?,?,?,?)").bind(uuid(), job.project_id, next.agent_name, output, timestamp).run();
 
-    await env.DB.prepare(
-      `INSERT INTO project_outputs
-      (id,project_id,agent_name,content,created_at)
-      VALUES (?,?,?,?,?)`
-    ).bind(
-      uuid(),
-      job.project_id,
-      next.agent_name,
-      output,
-      timestamp
-    ).run();
-
-    const counts = await env.DB.prepare(
-      `SELECT COUNT(*) AS total FROM agent_runs
-       WHERE job_id=? AND status='completed'`
-    ).bind(jobId).first();
-
-    const pending = await env.DB.prepare(
-      `SELECT COUNT(*) AS total FROM agent_runs
-       WHERE job_id=? AND status IN ('queued','running')`
-    ).bind(jobId).first();
-
+    const counts = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status='completed'").bind(jobId).first();
+    const pending = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status IN ('queued','running')").bind(jobId).first();
     const completed = Number(pending?.total || 0) === 0;
 
-    // Final editorial approval gate.
     if (next.agent_name === "Final Approval & Quality Score") {
-      const decision = output.match(
-        /FINAL_DECISION\s*:\s*(APPROVE|HOLD)/i
-      );
-
-      const approved = Boolean(
-        decision && decision[1].toUpperCase() === "APPROVE"
-      );
-
+      const decision = output.match(/FINAL_DECISION\s*:\s*(APPROVE|HOLD)/i);
+      const approved = Boolean(decision && decision[1].toUpperCase() === "APPROVE");
       if (!approved) {
-        await env.DB.prepare(
-          `UPDATE agent_runs
-           SET status='blocked',error='Editorial approval pending'
-           WHERE job_id=? AND status='queued'`
-        ).bind(jobId).run();
-
-        await env.DB.prepare(
-          `UPDATE workflow_jobs
-           SET current_step=?,status='needs_review',
-           error='Final editorial approval is HOLD or unclear',
-           updated_at=? WHERE id=?`
-        ).bind(
-          Number(counts?.total || 0),
-          timestamp,
-          jobId
-        ).run();
-
-        await env.DB.prepare(
-          "UPDATE projects SET status='needs_review',updated_at=? WHERE id=?"
-        ).bind(timestamp, job.project_id).run();
-
-        return {
-          completed: false,
-          needsReview: true,
-          decision: "HOLD",
-          agent: next.agent_name,
-          output
-        };
+        await env.DB.prepare(`UPDATE agent_runs SET status='blocked',error='Editorial approval pending' WHERE job_id=? AND status='queued'`).bind(jobId).run();
+        await env.DB.prepare(`UPDATE workflow_jobs SET current_step=?,status='needs_review',error='Final editorial approval is HOLD or unclear',updated_at=? WHERE id=?`).bind(Number(counts?.total || 0), timestamp, jobId).run();
+        await env.DB.prepare("UPDATE projects SET status='needs_review',updated_at=? WHERE id=?").bind(timestamp, job.project_id).run();
+        return { completed: false, needsReview: true, decision: "HOLD", agent: next.agent_name, output };
       }
     }
 
-    await env.DB.prepare(
-      `UPDATE workflow_jobs
-       SET current_step=?,status=?,updated_at=? WHERE id=?`
-    ).bind(
-      Number(counts?.total || 0),
-      completed ? "completed" : "running",
-      timestamp,
-      jobId
-    ).run();
-
-    await env.DB.prepare(
-      "UPDATE projects SET status=?,updated_at=? WHERE id=?"
-    ).bind(
-      completed ? "completed" : "running",
-      timestamp,
-      job.project_id
-    ).run();
-
-    return {
-      completed,
-      agent: next.agent_name,
-      output
-    };
-
+    await env.DB.prepare("UPDATE workflow_jobs SET current_step=?,status=?,updated_at=? WHERE id=?").bind(Number(counts?.total || 0), completed ? "completed" : "running", timestamp, jobId).run();
+    await env.DB.prepare("UPDATE projects SET status=?,updated_at=? WHERE id=?").bind(completed ? "completed" : "running", timestamp, job.project_id).run();
+    return { completed, agent: next.agent_name, output };
   } catch (error) {
     const message = String(error?.message || error);
-
-    await env.DB.prepare(
-      "UPDATE agent_runs SET status='error',error=?,updated_at=? WHERE id=?"
-    ).bind(message, now(), next.id).run();
-
-    await env.DB.prepare(
-      "UPDATE workflow_jobs SET status='paused',error=?,updated_at=? WHERE id=?"
-    ).bind(message, now(), jobId).run();
-
-    await env.DB.prepare(
-      "UPDATE projects SET status='paused',updated_at=? WHERE id=?"
-    ).bind(now(), job.project_id).run();
-
+    await env.DB.prepare("UPDATE agent_runs SET status='error',error=?,updated_at=? WHERE id=?").bind(message, now(), next.id).run();
+    await env.DB.prepare("UPDATE workflow_jobs SET status='paused',error=?,updated_at=? WHERE id=?").bind(message, now(), jobId).run();
+    await env.DB.prepare("UPDATE projects SET status='paused',updated_at=? WHERE id=?").bind(now(), job.project_id).run();
     throw error;
   }
 }
 
-/* =========================================================
-   THUMBNAIL GENERATION
-========================================================= */
-
+/* THUMBNAIL GENERATION */
 async function generateThumbnail(env, body) {
-  if (!env.AI) {
-    throw new Error("AI binding उपलब्ध नहीं है।");
-  }
-
+  if (!env.AI) throw new Error("AI binding उपलब्ध नहीं है।");
   const topic = String(body.topic || "").slice(0, 500);
   const headline = String(body.headline || topic).slice(0, 150);
   const subline = String(body.subline || "").slice(0, 150);
-
-  if (!topic.trim()) {
-    throw new Error("Thumbnail topic खाली है।");
-  }
-
+  if (!topic.trim()) throw new Error("Thumbnail topic खाली है।");
   const styles = [
     "cinematic documentary news photography, dramatic lighting",
     "realistic editorial photojournalism, strong visual storytelling",
@@ -961,504 +444,151 @@ async function generateThumbnail(env, body) {
     "cinematic realistic public issue documentary scene",
     "dramatic split composition, realistic photography"
   ];
-
   const thumbnails = [];
-
   for (let i = 0; i < styles.length; i++) {
     const prompt = `Create a professional YouTube thumbnail background. Topic: ${topic}. Style: ${styles[i]}. 16:9 horizontal, photorealistic. No text, letters, logo or watermark. Keep clear negative space for Hindi headline overlay. Do not depict fabricated evidence or fake news screenshots.`;
-
     try {
-      const result = await env.AI.run(IMAGE_MODEL, {
-        prompt,
-        width: 1280,
-        height: 720
-      });
-
+      const result = await env.AI.run(IMAGE_MODEL, { prompt, width: 1280, height: 720 });
       let imageData = result?.image || result?.data?.image || result;
-
-      if (imageData instanceof ArrayBuffer) {
-        imageData = new Uint8Array(imageData);
-      }
-
+      if (imageData instanceof ArrayBuffer) imageData = new Uint8Array(imageData);
       if (imageData instanceof Uint8Array) {
         let binary = "";
-
-        for (let i = 0; i < imageData.length; i += 0x8000) {
-          binary += String.fromCharCode(
-            ...imageData.subarray(i, i + 0x8000)
-          );
-        }
-
+        for (let i = 0; i < imageData.length; i += 0x8000) binary += String.fromCharCode(...imageData.subarray(i, i + 0x8000));
         imageData = btoa(binary);
       }
-
-      thumbnails.push(
-        typeof imageData === "string"
-          ? {
-              id: uuid(),
-              name: `Concept ${i + 1}`,
-              image: imageData.startsWith("data:")
-                ? imageData
-                : `data:image/jpeg;base64,${imageData}`,
-              headline,
-              subline
-            }
-          : {
-              id: uuid(),
-              name: `Concept ${i + 1}`,
-              error: "Image response format समझ नहीं आया।"
-            }
-      );
-
+      thumbnails.push(typeof imageData === "string" ? {
+        id: uuid(), name: `Concept ${i + 1}`,
+        image: imageData.startsWith("data:") ? imageData : `data:image/jpeg;base64,${imageData}`,
+        headline, subline
+      } : { id: uuid(), name: `Concept ${i + 1}`, error: "Image response format समझ नहीं आया।" });
     } catch (error) {
-      thumbnails.push({
-        id: uuid(),
-        name: `Concept ${i + 1}`,
-        error: String(error?.message || error)
-      });
+      thumbnails.push({ id: uuid(), name: `Concept ${i + 1}`, error: String(error?.message || error) });
     }
   }
-
-  return {
-    ok: true,
-    total: thumbnails.length,
-    successful: thumbnails.filter(x => x.image).length,
-    thumbnails
-  };
+  return { ok: true, total: thumbnails.length, successful: thumbnails.filter(x => x.image).length, thumbnails };
 }
 
-/* =========================================================
-   API ROUTES
-========================================================= */
-
+/* API ROUTES */
 async function handleApi(request, env) {
-  const url = new URL(request.url);
-  const path = url.pathname;
-  const method = request.method;
-
-  if (path === "/api/health" && method === "GET") {
-    return json({
-      ok: true,
-      service: "Apna Nazariya AI API",
-      version: "6.1"
-    });
-  }
-
-  if (path === "/api/secret-check" && method === "GET") {
-    return json({
-      ok: true,
-      appLoginIdConfigured: Boolean(env.APP_LOGIN_ID),
-      appLoginPasswordConfigured: Boolean(env.APP_LOGIN_PASSWORD),
-      databaseConfigured: Boolean(env.DB),
-      aiConfigured: Boolean(env.AI),
-      documentConversionAvailable: Boolean(
-        env.AI && typeof env.AI.toMarkdown === "function"
-      )
-    });
-  }
+  const url = new URL(request.url), path = url.pathname, method = request.method;
+  if (path === "/api/health" && method === "GET") return json({ ok: true, service: "Apna Nazariya AI API", version: "6.2" });
+  if (path === "/api/secret-check" && method === "GET") return json({
+    ok: true, appLoginIdConfigured: Boolean(env.APP_LOGIN_ID),
+    appLoginPasswordConfigured: Boolean(env.APP_LOGIN_PASSWORD),
+    databaseConfigured: Boolean(env.DB), aiConfigured: Boolean(env.AI),
+    documentConversionAvailable: Boolean(env.AI && typeof env.AI.toMarkdown === "function")
+  });
 
   if (path === "/api/login" && method === "POST") {
     const body = await readBody(request);
-
-    if (
-      !env.APP_LOGIN_ID ||
-      !env.APP_LOGIN_PASSWORD ||
-      !safeEqual(String(body.loginId || ""), env.APP_LOGIN_ID) ||
-      !safeEqual(String(body.password || ""), env.APP_LOGIN_PASSWORD)
-    ) {
-      return json(
-        { ok: false, error: "गलत Login ID या Password।" },
-        401
-      );
-    }
-
-    const token = randomToken();
-    const tokenHash = await sha256(token);
-
-    const expires = new Date(
-      Date.now() + SESSION_DAYS * 86400000
-    ).toISOString();
-
-    await env.DB.prepare(
-      "INSERT INTO login_sessions (token_hash,expires_at) VALUES (?,?)"
-    ).bind(tokenHash, expires).run();
-
-    return json(
-      { ok: true },
-      200,
-      { "Set-Cookie": cookieHeader(token) }
-    );
+    if (!env.APP_LOGIN_ID || !env.APP_LOGIN_PASSWORD || !safeEqual(String(body.loginId || ""), env.APP_LOGIN_ID) || !safeEqual(String(body.password || ""), env.APP_LOGIN_PASSWORD)) return json({ ok: false, error: "गलत Login ID या Password।" }, 401);
+    const token = randomToken(), tokenHash = await sha256(token);
+    const expires = new Date(Date.now() + SESSION_DAYS * 86400000).toISOString();
+    await env.DB.prepare("INSERT INTO login_sessions (token_hash,expires_at) VALUES (?,?)").bind(tokenHash, expires).run();
+    return json({ ok: true }, 200, { "Set-Cookie": cookieHeader(token) });
   }
-
   if (path === "/api/logout" && method === "POST") {
     const token = cookieValue(request, "an_session");
-
-    if (token) {
-      await env.DB.prepare(
-        "DELETE FROM login_sessions WHERE token_hash=?"
-      ).bind(await sha256(token)).run();
-    }
-
-    return json(
-      { ok: true },
-      200,
-      { "Set-Cookie": clearCookie() }
-    );
+    if (token) await env.DB.prepare("DELETE FROM login_sessions WHERE token_hash=?").bind(await sha256(token)).run();
+    return json({ ok: true }, 200, { "Set-Cookie": clearCookie() });
   }
+  if (path === "/api/me" && method === "GET") return json({ ok: true, loggedIn: await authenticate(request, env) });
+  if (!(await authenticate(request, env))) return json({ ok: false, error: "Unauthorized" }, 401);
 
-  if (path === "/api/me" && method === "GET") {
-    return json({
-      ok: true,
-      loggedIn: await authenticate(request, env)
-    });
-  }
-
-  if (!(await authenticate(request, env))) {
-    return json(
-      { ok: false, error: "Unauthorized" },
-      401
-    );
-  }
-
-  if (path === "/api/profile" && method === "GET") {
-    return json({
-      ok: true,
-      profile: await getProfile(env)
-    });
-  }
-
-  if (path === "/api/profile" && method === "POST") {
-    return json({
-      ok: true,
-      profile: await saveProfile(env, await readBody(request))
-    });
-  }
+  if (path === "/api/profile" && method === "GET") return json({ ok: true, profile: await getProfile(env) });
+  if (path === "/api/profile" && method === "POST") return json({ ok: true, profile: await saveProfile(env, await readBody(request)) });
 
   if (path === "/api/ai" && method === "POST") {
-    const body = await readBody(request);
-
-    const prompt = String(body.prompt || "")
-      .slice(0, MAX_PROMPT_LENGTH);
-
-    if (!prompt.trim()) {
-      return json(
-        { ok: false, error: "Prompt खाली है।" },
-        400
-      );
-    }
-
-    let sourceText = "";
-    let sourceErrors = [];
-
+    const body = await readBody(request), prompt = String(body.prompt || "").slice(0, MAX_PROMPT_LENGTH);
+    if (!prompt.trim()) return json({ ok: false, error: "Prompt खाली है।" }, 400);
+    let sourceText = "", sourceErrors = [];
     if (Array.isArray(body.sourceUrls) && body.sourceUrls.length) {
       const fetched = await collectSources(env, body.sourceUrls);
-      sourceText = sourceContext(fetched);
-      sourceErrors = fetched.errors;
+      sourceText = sourceContext(fetched); sourceErrors = fetched.errors;
     }
-
-    const finalPrompt = sourceText
-      ? `${prompt}
-
-PROVIDED SOURCE MATERIAL:
-${sourceText}
-
-Source material से बाहर की बात को verified मत बताना।`
-      : prompt;
-
-    const output = await runModel(
-      env,
-      BASE_RULES,
-      finalPrompt.slice(0, MAX_PROMPT_LENGTH),
-      3000
-    );
-
-    return json({
-      ok: true,
-      output,
-      sourcesRead: sourceText
-        ? body.sourceUrls.length - sourceErrors.length
-        : 0,
-      sourceErrors
-    });
+    const finalPrompt = sourceText ? `${prompt}\n\nPROVIDED SOURCE MATERIAL:\n${sourceText}\n\nSource material से बाहर की बात को verified मत बताना।` : prompt;
+    const output = await runModel(env, BASE_RULES, finalPrompt.slice(0, MAX_PROMPT_LENGTH), 3000);
+    return json({ ok: true, output, sourcesRead: sourceText ? Math.max(0, body.sourceUrls.length - sourceErrors.length) : 0, sourceErrors });
   }
-
   if (path === "/api/research/fetch" && method === "POST") {
-    const body = await readBody(request);
-    const result = await collectSources(env, body.sourceUrls);
-
-    return json({
-      ok: true,
-      sources: result.sources.map(s => ({
-        title: s.title,
-        url: s.url,
-        contentType: s.contentType,
-        text: s.text
-      })),
-      errors: result.errors
-    });
+    const result = await collectSources(env, (await readBody(request)).sourceUrls);
+    return json({ ok: true, sources: result.sources.map(s => ({ title: s.title, url: s.url, contentType: s.contentType, text: s.text })), errors: result.errors });
   }
-
-  if (path === "/api/thumbnails/generate" && method === "POST") {
-    return json(
-      await generateThumbnail(env, await readBody(request))
-    );
-  }
+  if (path === "/api/thumbnails/generate" && method === "POST") return json(await generateThumbnail(env, await readBody(request)));
 
   if (path === "/api/workflow/start" && method === "POST") {
     const body = await readBody(request);
-
-    if (!String(body.topic || "").trim()) {
-      return json(
-        { ok: false, error: "पहले video topic लिखें।" },
-        400
-      );
-    }
-
-    body.sourceUrls = Array.isArray(body.sourceUrls)
-      ? body.sourceUrls.slice(0, MAX_SOURCE_URLS)
-      : [];
-
+    if (!String(body.topic || "").trim()) return json({ ok: false, error: "पहले video topic लिखें।" }, 400);
+    body.sourceUrls = Array.isArray(body.sourceUrls) ? body.sourceUrls.slice(0, MAX_SOURCE_URLS) : [];
     const agents = chooseAgents(body.agents);
-
-    if (!agents.length) {
-      return json(
-        { ok: false, error: "कोई valid agent चुना नहीं गया।" },
-        400
-      );
-    }
-
+    if (!agents.length) return json({ ok: false, error: "कोई valid agent चुना नहीं गया।" }, 400);
     const created = await createProject(env, body, agents);
-
-    return json({
-      ok: true,
-      projectId: created.projectId,
-      jobId: created.jobId,
-      totalSteps: agents.length,
-      status: "queued"
-    });
+    return json({ ok: true, projectId: created.projectId, jobId: created.jobId, totalSteps: agents.length, status: "queued" });
   }
-
   if (path === "/api/workflow/step" && method === "POST") {
     const body = await readBody(request);
-
-    if (!body.jobId) {
-      return json(
-        { ok: false, error: "jobId जरूरी है।" },
-        400
-      );
-    }
-
-    return json({
-      ok: true,
-      ...await runNextStep(env, body.jobId)
-    });
+    if (!body.jobId) return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+    return json({ ok: true, ...await runNextStep(env, body.jobId) });
   }
-
   if (path === "/api/workflow/resume" && method === "POST") {
     const body = await readBody(request);
-
-    if (!body.jobId) {
-      return json(
-        { ok: false, error: "jobId जरूरी है।" },
-        400
-      );
-    }
-
-    const job = await env.DB.prepare(
-      "SELECT * FROM workflow_jobs WHERE id=?"
-    ).bind(body.jobId).first();
-
-    if (!job) {
-      return json(
-        { ok: false, error: "Workflow नहीं मिला।" },
-        404
-      );
-    }
-
-    await env.DB.prepare(
-      `UPDATE agent_runs
-       SET status='queued',error=NULL
-       WHERE job_id=? AND status='error'`
-    ).bind(body.jobId).run();
-
-    await env.DB.prepare(
-      "UPDATE workflow_jobs SET status='queued',error=NULL,updated_at=? WHERE id=?"
-    ).bind(now(), body.jobId).run();
-
-    await env.DB.prepare(
-      "UPDATE projects SET status='running',updated_at=? WHERE id=?"
-    ).bind(now(), job.project_id).run();
-
+    if (!body.jobId) return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+    const job = await env.DB.prepare("SELECT * FROM workflow_jobs WHERE id=?").bind(body.jobId).first();
+    if (!job) return json({ ok: false, error: "Workflow नहीं मिला।" }, 404);
+    await env.DB.prepare(`UPDATE agent_runs SET status='queued',error=NULL WHERE job_id=? AND status='error'`).bind(body.jobId).run();
+    await env.DB.prepare("UPDATE workflow_jobs SET status='queued',error=NULL,updated_at=? WHERE id=?").bind(now(), body.jobId).run();
+    await env.DB.prepare("UPDATE projects SET status='running',updated_at=? WHERE id=?").bind(now(), job.project_id).run();
     return json({ ok: true });
   }
-
   if (path === "/api/workflow/continue" && method === "POST") {
     const body = await readBody(request);
-
-    if (!body.jobId) {
-      return json(
-        { ok: false, error: "jobId जरूरी है।" },
-        400
-      );
-    }
-
-    const job = await env.DB.prepare(
-      "SELECT * FROM workflow_jobs WHERE id=?"
-    ).bind(body.jobId).first();
-
-    if (!job) {
-      return json(
-        { ok: false, error: "Workflow नहीं मिला।" },
-        404
-      );
-    }
-
-    if (job.status !== "needs_review") {
-      return json(
-        {
-          ok: false,
-          error: "यह workflow editorial review पर रुका नहीं है।"
-        },
-        409
-      );
-    }
-
-    await env.DB.prepare(
-      `UPDATE agent_runs
-       SET status='queued',error=NULL
-       WHERE job_id=? AND status='blocked'`
-    ).bind(body.jobId).run();
-
-    await env.DB.prepare(
-      "UPDATE workflow_jobs SET status='queued',error=NULL,updated_at=? WHERE id=?"
-    ).bind(now(), body.jobId).run();
-
-    await env.DB.prepare(
-      "UPDATE projects SET status='running',updated_at=? WHERE id=?"
-    ).bind(now(), job.project_id).run();
-
-    return json({
-      ok: true,
-      message: "Human review के बाद workflow आगे बढ़ेगा।"
-    });
+    if (!body.jobId) return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+    const job = await env.DB.prepare("SELECT * FROM workflow_jobs WHERE id=?").bind(body.jobId).first();
+    if (!job) return json({ ok: false, error: "Workflow नहीं मिला।" }, 404);
+    if (job.status !== "needs_review") return json({ ok: false, error: "यह workflow editorial review पर रुका नहीं है।" }, 409);
+    await env.DB.prepare(`UPDATE agent_runs SET status='queued',error=NULL WHERE job_id=? AND status='blocked'`).bind(body.jobId).run();
+    await env.DB.prepare("UPDATE workflow_jobs SET status='queued',error=NULL,updated_at=? WHERE id=?").bind(now(), body.jobId).run();
+    await env.DB.prepare("UPDATE projects SET status='running',updated_at=? WHERE id=?").bind(now(), job.project_id).run();
+    return json({ ok: true, message: "Human review के बाद workflow आगे बढ़ेगा।" });
   }
-
   if (path === "/api/workflow/status" && method === "GET") {
     const jobId = url.searchParams.get("jobId");
-
-    if (!jobId) {
-      return json(
-        { ok: false, error: "jobId जरूरी है।" },
-        400
-      );
-    }
-
+    if (!jobId) return json({ ok: false, error: "jobId जरूरी है।" }, 400);
     const status = await workflowStatus(env, jobId);
-
-    if (!status) {
-      return json(
-        { ok: false, error: "Workflow नहीं मिला।" },
-        404
-      );
-    }
-
-    return json({
-      ok: true,
-      ...status
-    });
+    if (!status) return json({ ok: false, error: "Workflow नहीं मिला।" }, 404);
+    return json({ ok: true, ...status });
   }
-
   if (path === "/api/projects" && method === "GET") {
-    const result = await env.DB.prepare(
-      "SELECT * FROM projects ORDER BY created_at DESC LIMIT 100"
-    ).all();
-
-    return json({
-      ok: true,
-      projects: result.results || []
-    });
+    const result = await env.DB.prepare("SELECT * FROM projects ORDER BY created_at DESC LIMIT 100").all();
+    return json({ ok: true, projects: result.results || [] });
   }
-
   const projectMatch = path.match(/^\/api\/projects\/([^/]+)$/);
-
   if (projectMatch && method === "GET") {
     const projectId = projectMatch[1];
-
-    const project = await env.DB.prepare(
-      "SELECT * FROM projects WHERE id=?"
-    ).bind(projectId).first();
-
-    if (!project) {
-      return json(
-        { ok: false, error: "Project नहीं मिला।" },
-        404
-      );
-    }
-
-    const outputs = await env.DB.prepare(
-      `SELECT * FROM project_outputs
-       WHERE project_id=? ORDER BY created_at ASC`
-    ).bind(projectId).all();
-
-    const jobs = await env.DB.prepare(
-      `SELECT * FROM workflow_jobs
-       WHERE project_id=? ORDER BY created_at DESC`
-    ).bind(projectId).all();
-
-    return json({
-      ok: true,
-      project,
-      outputs: outputs.results || [],
-      jobs: jobs.results || []
-    });
+    const project = await env.DB.prepare("SELECT * FROM projects WHERE id=?").bind(projectId).first();
+    if (!project) return json({ ok: false, error: "Project नहीं मिला।" }, 404);
+    const outputs = await env.DB.prepare("SELECT * FROM project_outputs WHERE project_id=? ORDER BY created_at ASC").bind(projectId).all();
+    const jobs = await env.DB.prepare("SELECT * FROM workflow_jobs WHERE project_id=? ORDER BY created_at DESC").bind(projectId).all();
+    return json({ ok: true, project, outputs: outputs.results || [], jobs: jobs.results || [] });
   }
-
-  return json(
-    { ok: false, error: "API route नहीं मिला।" },
-    404
-  );
+  return json({ ok: false, error: "API route नहीं मिला।" }, 404);
 }
 
-/* =========================================================
-   MAIN WORKER ENTRY
-========================================================= */
-
+/* MAIN WORKER ENTRY */
 export default {
   async fetch(request, env) {
     try {
-      if (request.method === "OPTIONS") {
-        return new Response(null, {
-          headers: corsHeaders
-        });
-      }
-
+      if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
       const url = new URL(request.url);
-
       if (url.pathname.startsWith("/api/")) {
         await ensureSchema(env);
         return await handleApi(request, env);
       }
-
-      if (env.ASSETS) {
-        return await env.ASSETS.fetch(request);
-      }
-
-      return new Response(
-        "Apna Nazariya Studio is running.",
-        {
-          headers: {
-            "Content-Type": "text/plain; charset=utf-8"
-          }
-        }
-      );
-
+      if (env.ASSETS) return await env.ASSETS.fetch(request);
+      return new Response("Apna Nazariya Studio is running.", { headers: { "Content-Type": "text/plain; charset=utf-8" } });
     } catch (error) {
       console.error("Apna Nazariya Worker Error:", error);
-
-      return json({
-        ok: false,
-        error: String(error?.message || error)
-      }, 500);
+      return json({ ok: false, error: String(error?.message || error) }, 500);
     }
   }
 };
