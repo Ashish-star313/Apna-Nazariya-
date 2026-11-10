@@ -57,6 +57,11 @@ button{
 button.secondary{
   background:#26344d;color:white;border:1px solid #40516f
 }
+button.copy-button{
+  background:#174b3b;color:#bbf7d0;
+  border:1px solid #267653;padding:8px 12px;
+  font-size:12px
+}
 button.danger{background:#552b37;color:#fff}
 button:disabled{opacity:.5;cursor:not-allowed}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
@@ -85,6 +90,11 @@ button:disabled{opacity:.5;cursor:not-allowed}
   border-radius:10px;padding:12px;margin:8px 0
 }
 .project button{margin-top:8px}
+.output-actions{
+  display:flex;gap:8px;flex-wrap:wrap;
+  align-items:center;margin-top:9px
+}
+.output-actions button{margin-top:0}
 .step{
   padding:10px;border-bottom:1px solid var(--line);
   display:flex;justify-content:space-between;gap:10px;
@@ -194,7 +204,10 @@ a{color:var(--gold)}
     <button id="refreshWorkflow" class="secondary">Refresh Status</button>
   </div>
 
-  <h3>Agent Outputs</h3>
+  <div class="row" style="justify-content:space-between;margin-top:18px">
+    <h3 style="margin:0">Agent Outputs</h3>
+    <button id="copyAllWorkflow" class="copy-button" disabled>📋 Copy All</button>
+  </div>
   <div id="workflowOutputs"></div>
 </section>
 
@@ -215,7 +228,7 @@ a{color:var(--gold)}
 
   <p id="manualStatus" class="status"></p>
   <div id="manualAnswer" class="output">Agent का जवाब यहां दिखाई देगा।</div>
-  <button id="copyManual" class="secondary" style="margin-top:10px">जवाब Copy करें</button>
+  <button id="copyManual" class="copy-button" style="margin-top:10px">📋 जवाब Copy करें</button>
 </section>
 
 <section class="card">
@@ -286,6 +299,93 @@ let selectedAgent = "script";
 let currentJobId = "";
 let currentProjectId = "";
 let workflowBusy = false;
+
+/* ---------- COPY SYSTEM ---------- */
+
+async function copyText(text){
+  const value = String(text || "");
+
+  if(!value.trim()){
+    throw new Error("कॉपी करने के लिए कोई जवाब नहीं है।");
+  }
+
+  // Modern clipboard method
+  try{
+    if(navigator.clipboard && window.isSecureContext){
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  }catch(error){
+    // Fallback नीचे इस्तेमाल होगा
+  }
+
+  // Android Chrome / browser fallback
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly","");
+  textarea.style.position = "fixed";
+  textarea.style.top = "0";
+  textarea.style.left = "-9999px";
+  textarea.style.opacity = "0";
+
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  textarea.setSelectionRange(0,textarea.value.length);
+
+  let copied = false;
+
+  try{
+    copied = document.execCommand("copy");
+  }catch(error){
+    copied = false;
+  }
+
+  textarea.remove();
+
+  if(!copied){
+    throw new Error("इस browser में Copy नहीं हो पाया।");
+  }
+
+  return true;
+}
+
+function createCopyButton(text,label="📋 Copy"){
+  const button = document.createElement("button");
+  button.type = "button";
+  button.className = "copy-button";
+  button.textContent = label;
+
+  button.onclick = async () => {
+    try{
+      await copyText(text);
+      button.textContent = "✓ Copied!";
+      setTimeout(()=>{
+        button.textContent = label;
+      },1800);
+    }catch(error){
+      alert(error.message);
+    }
+  };
+
+  return button;
+}
+
+function getOutputText(container){
+  const blocks = container.querySelectorAll("[data-copy-content]");
+  return Array.from(blocks)
+    .map(block => {
+      const heading = block.dataset.copyTitle || "Agent Output";
+      return `${heading}\n\n${block.textContent.trim()}`;
+    })
+    .filter(Boolean)
+    .join("\n\n----------------------------------------\n\n");
+}
+
+function updateCopyAllButton(container,button){
+  const hasOutput = !!container.querySelector("[data-copy-content]");
+  button.disabled = !hasOutput;
+}
 
 function escapeHTML(value){
   return String(value ?? "").replace(/[&<>"']/g, ch => ({
@@ -473,18 +573,48 @@ function renderSteps(steps){
   });
 }
 
+/* Workflow output + individual Copy */
+
 function appendWorkflowOutput(agent, answer){
   const box = $("workflowOutputs");
   const section = document.createElement("div");
   section.className = "project";
 
-  section.innerHTML = `
-    <b>${escapeHTML(agent)}</b>
-    <div class="output">${escapeHTML(answer)}</div>
-  `;
+  const heading = document.createElement("b");
+  heading.textContent = agent;
 
+  const output = document.createElement("div");
+  output.className = "output";
+  output.textContent = answer;
+
+  output.dataset.copyContent = "true";
+  output.dataset.copyTitle = agent;
+
+  const actions = document.createElement("div");
+  actions.className = "output-actions";
+  actions.appendChild(createCopyButton(answer,"📋 Copy जवाब"));
+
+  section.appendChild(heading);
+  section.appendChild(output);
+  section.appendChild(actions);
   box.appendChild(section);
+
+  updateCopyAllButton(box,$("copyAllWorkflow"));
 }
+
+$("copyAllWorkflow").onclick = async () => {
+  try{
+    const text = getOutputText($("workflowOutputs"));
+    await copyText(text);
+
+    $("copyAllWorkflow").textContent = "✓ सभी जवाब Copied!";
+    setTimeout(()=>{
+      $("copyAllWorkflow").textContent = "📋 Copy All";
+    },2000);
+  }catch(error){
+    alert(error.message);
+  }
+};
 
 async function refreshWorkflow(){
   if(!currentJobId) return;
@@ -590,6 +720,7 @@ $("startWorkflow").onclick = async () => {
     currentProjectId = data.projectId;
 
     $("workflowOutputs").innerHTML = "";
+    $("copyAllWorkflow").disabled = true;
     $("workflowCard").classList.remove("hidden");
 
     setStatus("workflowStatus",
@@ -628,6 +759,8 @@ $("refreshWorkflow").onclick = async () => {
     setStatus("workflowStatus",error.message,true);
   }
 };
+
+/* Manual Agent output */
 
 $("manualSend").onclick = async () => {
   const topic = $("manualTopic").value.trim();
@@ -680,6 +813,7 @@ RULES:
     setStatus("manualStatus",`${data.agent || agent[1]} का जवाब मिल गया!`);
 
   }catch(error){
+    $("manualAnswer").textContent = "";
     setStatus("manualStatus",error.message,true);
   }finally{
     button.disabled = false;
@@ -687,18 +821,14 @@ RULES:
 };
 
 $("copyManual").onclick = async () => {
-  const answer = $("manualAnswer").textContent;
-
-  if(!answer.trim()){
-    alert("कॉपी करने के लिए जवाब नहीं है।");
-    return;
-  }
-
   try{
-    await navigator.clipboard.writeText(answer);
-    alert("जवाब Copy हो गया!");
-  }catch{
-    alert("Copy नहीं हुआ। जवाब को Select करके Copy करें।");
+    await copyText($("manualAnswer").textContent);
+    $("copyManual").textContent = "✓ Copied!";
+    setTimeout(()=>{
+      $("copyManual").textContent = "📋 जवाब Copy करें";
+    },1800);
+  }catch(error){
+    alert(error.message);
   }
 };
 
@@ -738,6 +868,8 @@ async function loadProjects(){
   }
 }
 
+/* Saved Project outputs + Copy and Copy All */
+
 async function loadProjectDetails(projectId){
   try{
     const data = await api(
@@ -745,22 +877,72 @@ async function loadProjectDetails(projectId){
     );
 
     const box = $("projectDetails");
-    box.innerHTML = `
-      <h3>${escapeHTML(data.project.title)}</h3>
-      <p>${escapeHTML(data.project.topic)}</p>
-      <p class="muted">Status: ${escapeHTML(data.project.status)}</p>
-      <h3>Saved Agent Outputs</h3>
-    `;
+    box.innerHTML = "";
+
+    const heading = document.createElement("h3");
+    heading.textContent = data.project.title;
+
+    const topic = document.createElement("p");
+    topic.textContent = data.project.topic;
+
+    const status = document.createElement("p");
+    status.className = "muted";
+    status.textContent = "Status: " + data.project.status;
+
+    const outputHeading = document.createElement("h3");
+    outputHeading.textContent = "Saved Agent Outputs";
+
+    const copyAll = document.createElement("button");
+    copyAll.className = "copy-button";
+    copyAll.type = "button";
+    copyAll.textContent = "📋 Copy All Saved Outputs";
+    copyAll.disabled = true;
+
+    copyAll.onclick = async () => {
+      try{
+        await copyText(getOutputText(box));
+        copyAll.textContent = "✓ सभी जवाब Copied!";
+        setTimeout(()=>{
+          copyAll.textContent = "📋 Copy All Saved Outputs";
+        },2000);
+      }catch(error){
+        alert(error.message);
+      }
+    };
+
+    box.appendChild(heading);
+    box.appendChild(topic);
+    box.appendChild(status);
+    box.appendChild(outputHeading);
+    box.appendChild(copyAll);
 
     (data.outputs || []).forEach(output => {
       const section = document.createElement("div");
       section.className = "project";
-      section.innerHTML = `
-        <b>${escapeHTML(output.title || output.output_type)}</b>
-        <div class="output">${escapeHTML(output.content)}</div>
-      `;
+
+      const title = output.title || output.output_type || "Agent Output";
+      const content = output.content || "";
+
+      const name = document.createElement("b");
+      name.textContent = title;
+
+      const contentBox = document.createElement("div");
+      contentBox.className = "output";
+      contentBox.textContent = content;
+      contentBox.dataset.copyContent = "true";
+      contentBox.dataset.copyTitle = title;
+
+      const actions = document.createElement("div");
+      actions.className = "output-actions";
+      actions.appendChild(createCopyButton(content,"📋 Copy जवाब"));
+
+      section.appendChild(name);
+      section.appendChild(contentBox);
+      section.appendChild(actions);
       box.appendChild(section);
     });
+
+    updateCopyAllButton(box,copyAll);
 
     const latestJob = (data.jobs || [])[0];
 
