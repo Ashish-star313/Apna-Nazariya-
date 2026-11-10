@@ -6,743 +6,235 @@
 <meta name="theme-color" content="#101114">
 <title>Apna Nazariya Studio</title>
 <style>
-:root{
-  color-scheme:dark;
-  --bg:#101114;--panel:#191b21;--panel2:#20232b;
-  --text:#f4f4f5;--muted:#a1a1aa;
-  --accent:#e8a34a;--border:#30323a;
-  --green:#45c58a;--red:#f87171;
-}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);
-font-family:system-ui,-apple-system,Arial,sans-serif}
-button,input,textarea,select{font:inherit}
-button{cursor:pointer}
-header{padding:16px 20px;border-bottom:1px solid var(--border);
-display:flex;align-items:center;justify-content:space-between;
-position:sticky;top:0;background:#101114ee;z-index:5}
-.brand{font-weight:900;font-size:19px}
-.brand span{color:var(--accent)}
-.sub{font-size:12px;color:var(--muted)}
-main{max-width:1100px;margin:auto;padding:18px}
-.panel{background:var(--panel);border:1px solid var(--border);
-border-radius:15px;padding:18px;margin-bottom:16px}
-h2{font-size:19px;margin:0 0 14px}
-h3{font-size:15px;margin:0 0 10px}
-label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
-input,textarea,select{
-  width:100%;background:#101217;color:white;border:1px solid var(--border);
-  border-radius:9px;padding:12px;outline:none
-}
-textarea{min-height:100px;resize:vertical}
-input:focus,textarea:focus,select:focus{border-color:var(--accent)}
-button{border:0;border-radius:9px;padding:11px 15px;
-background:var(--accent);color:#171717;font-weight:750}
-button.secondary{background:var(--panel2);color:white;
-border:1px solid var(--border)}
-button.danger{background:#702b30;color:white}
-button:disabled{opacity:.5;cursor:not-allowed}
-.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}
-.row>*{flex:1}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
-.agent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}
-.agent{background:#111319;border:1px solid var(--border);padding:10px;
-border-radius:9px;font-size:13px}
-.agent input{width:auto;margin-right:8px}
-.hidden{display:none!important}
-.muted{color:var(--muted);font-size:13px}
-.output{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;
-background:#111319;border:1px solid var(--border);
-border-radius:10px;padding:14px;margin-top:10px}
-.output-head{display:flex;align-items:center;justify-content:space-between;
-gap:10px;margin-top:15px}
-.output-head strong{font-size:14px}
-.output-head button{padding:7px 11px;font-size:12px}
-.status{padding:6px 10px;border-radius:20px;background:#282b32;
-font-size:12px;display:inline-block}
-.good{color:var(--green)}.bad{color:var(--red)}
-nav{display:flex;gap:7px;overflow-x:auto;padding:12px 0}
-nav button{white-space:nowrap;background:var(--panel2);color:white}
-nav button.active{background:var(--accent);color:#171717}
-.progress{height:7px;background:#30323a;border-radius:20px;overflow:hidden;margin:12px 0}
-.progress div{height:100%;width:0;background:var(--green);transition:.3s}
-.project{padding:12px;border:1px solid var(--border);border-radius:10px;
-margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}
-.small{font-size:12px;color:var(--muted)}
-#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
-background:#292d35;padding:12px 18px;border-radius:10px;display:none;z-index:10}
-footer{text-align:center;color:var(--muted);font-size:12px;padding:25px}
-@media(max-width:600px){
- main{padding:12px}header{padding:13px}
- .panel{padding:14px}
- .row>*{min-width:100%}
- .project{align-items:flex-start;flex-direction:column}
-}
+:root{color-scheme:dark;--bg:#101114;--panel:#191b21;--panel2:#20232b;--text:#f4f4f5;--muted:#a1a1aa;--accent:#e8a34a;--border:#30323a;--green:#45c58a;--red:#f87171}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Arial,sans-serif}
+button,input,textarea,select{font:inherit}button{cursor:pointer;border:0;border-radius:9px;padding:11px 15px;background:var(--accent);color:#171717;font-weight:750}
+button.secondary{background:var(--panel2);color:white;border:1px solid var(--border)}button:disabled{opacity:.5;cursor:not-allowed}
+header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:#101114ee;z-index:5}
+.brand{font-weight:900;font-size:19px}.brand span{color:var(--accent)}.sub,.muted{font-size:13px;color:var(--muted)}
+main{max-width:1100px;margin:auto;padding:18px}.panel{background:var(--panel);border:1px solid var(--border);border-radius:15px;padding:18px;margin-bottom:16px}
+h2{font-size:19px;margin:0 0 14px}h3{font-size:15px;margin:0 0 10px}label{display:block;font-size:13px;color:var(--muted);margin:12px 0 6px}
+input,textarea,select{width:100%;background:#101217;color:white;border:1px solid var(--border);border-radius:9px;padding:12px;outline:none}
+textarea{min-height:100px;resize:vertical}input:focus,textarea:focus,select:focus{border-color:var(--accent)}
+.row{display:flex;gap:9px;flex-wrap:wrap;align-items:center}.row>*{flex:1}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.agent-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:8px}.agent{background:#111319;border:1px solid var(--border);padding:10px;border-radius:9px;font-size:13px}.agent input{width:auto;margin-right:8px}
+.hidden{display:none!important}.output{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.65;background:#111319;border:1px solid var(--border);border-radius:10px;padding:14px;margin-top:10px}
+.output-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:15px}.output-head strong{font-size:14px}.output-head button{padding:7px 11px;font-size:12px}
+.status{padding:6px 10px;border-radius:20px;background:#282b32;font-size:12px;display:inline-block}.good{color:var(--green)}.bad{color:var(--red)}
+nav{display:flex;gap:7px;overflow-x:auto;padding:12px 0}nav button{white-space:nowrap;background:var(--panel2);color:white}nav button.active{background:var(--accent);color:#171717}
+.progress{height:7px;background:#30323a;border-radius:20px;overflow:hidden;margin:12px 0}.progress div{height:100%;width:0;background:var(--green);transition:.3s}
+.project{padding:12px;border:1px solid var(--border);border-radius:10px;margin:8px 0;display:flex;justify-content:space-between;gap:10px;align-items:center}.small{font-size:12px;color:var(--muted)}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#292d35;padding:12px 18px;border-radius:10px;display:none;z-index:10;max-width:90%;text-align:center}
+footer{text-align:center;color:var(--muted);font-size:12px;padding:25px}.hint{font-size:12px;color:var(--muted);line-height:1.5;margin-top:6px}
+@media(max-width:600px){main{padding:12px}header{padding:13px}.panel{padding:14px}.row>*{min-width:100%}.project{align-items:flex-start;flex-direction:column}}
 </style>
 </head>
 <body>
-
-<header>
-  <div>
-    <div class="brand">अपना <span>नज़रिया</span></div>
-    <div class="sub">सोच अपनी, फैसला आपका · AI Production Studio</div>
-  </div>
-  <button class="secondary hidden" id="logoutBtn" onclick="logout()">Logout</button>
-</header>
-
+<header><div><div class="brand">अपना <span>नज़रिया</span></div><div class="sub">सोच अपनी, फैसला आपका · AI Production Studio</div></div><button class="secondary hidden" id="logoutBtn" onclick="logout()">Logout</button></header>
 <main>
-
 <section id="loginScreen" class="panel">
-  <h2>Studio Login</h2>
-  <p class="muted">अपने Creator Studio में प्रवेश करें।</p>
-  <label>Login ID</label>
-  <input id="loginId" autocomplete="username" placeholder="Login ID">
-  <label>Password</label>
-  <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
-  <br><br>
-  <button onclick="login()">Login करें</button>
-  <p id="loginMessage" class="muted"></p>
+<h2>Studio Login</h2><p class="muted">अपने Creator Studio में प्रवेश करें।</p>
+<label>Login ID</label><input id="loginId" autocomplete="username" placeholder="Login ID">
+<label>Password</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Password">
+<br><br><button onclick="login()">Login करें</button><p id="loginMessage" class="muted"></p>
 </section>
-
 <section id="studio" class="hidden">
-
 <nav>
-  <button class="active" data-tab="dashboard">Dashboard</button>
-  <button data-tab="profile">Creator DNA</button>
-  <button data-tab="production">Production</button>
-  <button data-tab="history">Projects</button>
-  <button data-tab="tools">AI Tools</button>
+<button class="active" data-tab="dashboard">Dashboard</button><button data-tab="profile">Creator DNA</button><button data-tab="production">Production</button><button data-tab="history">Projects</button><button data-tab="tools">AI Tools</button>
 </nav>
-
 <section id="tab-dashboard" class="tab panel">
-  <h2>🎬 Creator Command Center</h2>
-  <p class="muted">दो creators · एक production desk</p>
-  <div class="grid">
-    <div class="panel">
-      <h3>Research से Publishing तक</h3>
-      <p class="muted">अपने विषय को एक complete video production workflow में बदलें।</p>
-      <button onclick="showTab('production')">नया वीडियो शुरू करें</button>
-    </div>
-    <div class="panel">
-      <h3>Creator Profile</h3>
-      <p class="muted">अपनी भाषा, दोनों hosts और channel reference सेट करें।</p>
-      <button class="secondary" onclick="showTab('profile')">Profile खोलें</button>
-    </div>
-    <div class="panel">
-      <h3>पुराने Projects</h3>
-      <p class="muted">पहले बनाए गए projects और उनके outputs देखें।</p>
-      <button class="secondary" onclick="showTab('history');loadProjects()">History देखें</button>
-    </div>
-  </div>
-  <div id="healthStatus" class="muted">API status जाँचा जा रहा है...</div>
+<h2>🎬 Creator Command Center</h2><p class="muted">दो creators · एक production desk</p>
+<div class="grid">
+<div class="panel"><h3>Research से Publishing तक</h3><p class="muted">अपने विषय को complete video production workflow में बदलें।</p><button onclick="showTab('production')">नया वीडियो शुरू करें</button></div>
+<div class="panel"><h3>Creator Profile</h3><p class="muted">अपनी भाषा, दोनों hosts और channel reference सेट करें।</p><button class="secondary" onclick="showTab('profile')">Profile खोलें</button></div>
+<div class="panel"><h3>पुराने Projects</h3><p class="muted">पहले बनाए गए projects और उनके outputs देखें।</p><button class="secondary" onclick="showTab('history');loadProjects()">History देखें</button></div>
+</div><div id="healthStatus" class="muted">API status जाँचा जा रहा है...</div>
 </section>
-
 <section id="tab-profile" class="tab panel hidden">
-  <h2>👥 Creator DNA & Project Setup</h2>
-  <p class="muted">यह shared profile दोनों भाइयों के लिए इस्तेमाल होगी।</p>
-
-  <label>Channel Name</label>
-  <input id="channelName" value="Apna Nazariya">
-
-  <label>Tagline</label>
-  <input id="tagline" value="सोच अपनी, फैसला आपका।">
-
-  <label>Creator Voice / भाषा</label>
-  <textarea id="creatorVoice">सरल बोलचाल वाली हिंदी, हल्का UP/desi touch। बातचीत स्वाभाविक हो, टीवी एंकर जैसी नहीं।</textarea>
-
-  <div class="grid">
-    <div>
-      <label>Host 1 का अंदाज</label>
-      <textarea id="hostOne">बड़ा भाई: गंभीर, data और system issues पर ध्यान देने वाला।</textarea>
-    </div>
-    <div>
-      <label>Host 2 का अंदाज</label>
-      <textarea id="hostTwo">छोटा भाई: grounded, युवाओं और आम आदमी के नजरिये से सवाल उठाने वाला।</textarea>
-    </div>
-  </div>
-
-  <label>Reference YouTube Channels (हर लाइन में एक URL)</label>
-  <textarea id="referenceChannels" placeholder="https://youtube.com/@channel1"></textarea>
-
-  <label>Additional Editorial Rules</label>
-  <textarea id="extraRules" placeholder="अपनी अतिरिक्त guidelines लिखें"></textarea>
-
-  <button onclick="saveProfile()">Profile Save करें</button>
-  <span id="profileMessage" class="muted"></span>
+<h2>👥 Creator DNA & Project Setup</h2><p class="muted">यह shared profile दोनों भाइयों के लिए इस्तेमाल होगी।</p>
+<label>Channel Name</label><input id="channelName" value="Apna Nazariya">
+<label>Tagline</label><input id="tagline" value="सोच अपनी, फैसला आपका।">
+<label>Creator Voice / भाषा</label><textarea id="creatorVoice">सरल बोलचाल वाली हिंदी, हल्का UP/desi touch। बातचीत स्वाभाविक हो, टीवी एंकर जैसी नहीं।</textarea>
+<div class="grid"><div><label>Host 1 का अंदाज</label><textarea id="hostOne">बड़ा भाई: गंभीर, data और system issues पर ध्यान देने वाला।</textarea></div><div><label>Host 2 का अंदाज</label><textarea id="hostTwo">छोटा भाई: grounded, युवाओं और आम आदमी के नजरिये से सवाल उठाने वाला।</textarea></div></div>
+<label>Reference YouTube Channels (हर लाइन में एक URL)</label><textarea id="referenceChannels" placeholder="https://youtube.com/@channel1"></textarea>
+<label>Additional Editorial Rules</label><textarea id="extraRules" placeholder="अपनी अतिरिक्त guidelines लिखें"></textarea>
+<button onclick="saveProfile()">Profile Save करें</button> <span id="profileMessage" class="muted"></span>
 </section>
-
 <section id="tab-production" class="tab panel hidden">
-  <h2>🚀 नया Video Production</h2>
-
-  <label>Video Topic</label>
-  <textarea id="topic" placeholder="उदाहरण: भारत में बेरोजगारी और युवाओं की चुनौतियां"></textarea>
-
-  <div class="grid">
-    <div>
-      <label>Video Format</label>
-      <select id="format">
-        <option>Long Video</option>
-        <option>YouTube Short</option>
-        <option>Live Discussion</option>
-        <option>Explainer</option>
-      </select>
-    </div>
-    <div>
-      <label>Video Duration</label>
-      <select id="duration">
-        <option>8-10 मिनट</option>
-        <option>10-15 मिनट</option>
-        <option>15-20 मिनट</option>
-        <option>30-45 मिनट</option>
-        <option>30-60 सेकंड</option>
-      </select>
-    </div>
-  </div>
-
-  <label>Extra Instructions</label>
-  <textarea id="instructions" placeholder="उदाहरण: CMIE और PLFS जैसे sources को प्राथमिकता दें। तथ्य और राय अलग रखें।"></textarea>
-
-  <h3 style="margin-top:20px">Production Agents चुनें</h3>
-  <p class="muted">सभी agents default रूप से selected हैं। जरूरत के अनुसार बदल सकते हैं।</p>
-
-  <div class="row">
-    <button class="secondary" onclick="selectAll(true)">सभी चुनें</button>
-    <button class="secondary" onclick="selectAll(false)">सभी हटाएँ</button>
-  </div>
-
-  <div id="agentList" class="agent-grid" style="margin-top:12px"></div>
-
-  <br>
-  <button id="startBtn" onclick="startWorkflow()">🎬 Production शुरू करें</button>
-
-  <div id="workflowArea" class="hidden">
-    <hr style="border-color:var(--border);margin:20px 0">
-    <h3>Production Progress</h3>
-    <div id="workflowStatus" class="status">Queued</div>
-    <div class="progress"><div id="progressBar"></div></div>
-    <p id="progressText" class="muted"></p>
-    <div class="row">
-      <button id="nextBtn" onclick="runNext()">अगला Agent चलाएँ</button>
-      <button class="secondary" onclick="resumeWorkflow()">Retry / Resume</button>
-    </div>
-    <div id="workflowOutputs"></div>
-  </div>
+<h2>🚀 नया Video Production</h2>
+<label>Video Topic</label><textarea id="topic" placeholder="उदाहरण: भारत में बेरोजगारी और युवाओं की चुनौतियां"></textarea>
+<div class="grid"><div><label>Video Format</label><select id="format"><option>Long Video</option><option>YouTube Short</option><option>Live Discussion</option><option>Explainer</option></select></div><div><label>Video Duration</label><select id="duration"><option>8-10 मिनट</option><option>10-15 मिनट</option><option>15-20 मिनट</option><option>30-45 मिनट</option><option>30-60 सेकंड</option></select></div></div>
+<label>Extra Instructions</label><textarea id="instructions" placeholder="उदाहरण: PLFS और सरकारी sources को प्राथमिकता दें। तथ्य और राय अलग रखें।"></textarea>
+<label>Research Source URLs (हर लाइन में एक URL, अधिकतम 5)</label><textarea id="sourceUrls" placeholder="https://mospi.gov.in/...&#10;https://www.pib.gov.in/..."></textarea>
+<p class="hint">अधिकतम 5 HTTPS links दें। PDF/HTML पढ़ने की कोशिश होगी; केवल allowlist में मौजूद official/recognized domains स्वीकार होंगे। URL न देने पर AI source suggestions दे सकता है, लेकिन उन्हें verified नहीं मानेगा। Live web search अपने-आप नहीं होता।</p>
+<h3 style="margin-top:20px">Production Agents चुनें</h3><p class="muted">सभी agents default रूप से selected हैं। जरूरत के अनुसार बदल सकते हैं।</p>
+<div class="row"><button class="secondary" onclick="selectAll(true)">सभी चुनें</button><button class="secondary" onclick="selectAll(false)">सभी हटाएँ</button></div>
+<div id="agentList" class="agent-grid" style="margin-top:12px"></div><br>
+<button id="startBtn" onclick="startWorkflow()">🎬 Production शुरू करें</button>
+<div id="workflowArea" class="hidden"><hr style="border-color:var(--border);margin:20px 0"><h3>Production Progress</h3><div id="workflowStatus" class="status">Queued</div><div class="progress"><div id="progressBar"></div></div><p id="progressText" class="muted"></p>
+<div class="row"><button id="nextBtn" onclick="runNext()">अगला Agent चलाएँ</button><button class="secondary" id="runAllBtn" onclick="runAllRemaining()">सभी Agents चलाएँ</button><button class="secondary" onclick="resumeWorkflow()">Retry / Resume</button></div><div id="reviewGate" class="panel hidden"><h3>🛑 Editorial Human Review</h3><p class="muted">Final Approval Agent ने HOLD दिया है या स्पष्ट approval नहीं दिया। नीचे उसकी रिपोर्ट पढ़ें। तथ्य/स्क्रिप्ट की जाँच करने के बाद ही आगे बढ़ें।</p><button id="continueReviewBtn" onclick="continueAfterReview()">मैंने Review कर लिया — आगे बढ़ें</button></div><div id="workflowOutputs"></div></div>
 </section>
-
-<section id="tab-history" class="tab panel hidden">
-  <h2>📚 Project History</h2>
-  <button onclick="loadProjects()">Refresh Projects</button>
-  <div id="projectList" style="margin-top:12px"></div>
-  <div id="projectDetail"></div>
-</section>
-
+<section id="tab-history" class="tab panel hidden"><h2>📚 Project History</h2><button onclick="loadProjects()">Refresh Projects</button><div id="projectList" style="margin-top:12px"></div><div id="projectDetail"></div></section>
 <section id="tab-tools" class="tab panel hidden">
-  <h2>🧠 AI Tools Desk</h2>
-  <p class="muted">किसी एक काम के लिए AI से सहायता लें।</p>
-
-  <label>AI Tool चुनें</label>
-  <select id="toolType">
-    <option value="Research & Fact Check">Research & Fact Check</option>
-    <option value="Human Scriptwriter">Human Scriptwriter</option>
-    <option value="Hook & Retention">Hook & Retention</option>
-    <option value="Title Specialist">Title Specialist</option>
-    <option value="Thumbnail Designer">Thumbnail Designer</option>
-    <option value="SEO Specialist">SEO Specialist</option>
-    <option value="Shorts Producer">Shorts Producer</option>
-    <option value="Editing Assistant">Editing Assistant</option>
-    <option value="Publishing Assistant">Publishing Assistant</option>
-    <option value="Analytics Specialist">Analytics Specialist</option>
-    <option value="Growth Strategist">Growth Strategist</option>
-    <option value="Live Producer">Live Producer</option>
-  </select>
-
-  <label>Topic / Instructions</label>
-  <textarea id="toolPrompt" placeholder="अपना सवाल या काम लिखें"></textarea>
-  <button onclick="runTool()">AI से तैयार करवाएँ</button>
-  <div id="toolOutput"></div>
-
-  <hr style="border-color:var(--border);margin:25px 0">
-
-  <h3>🖼️ Thumbnail Background Generator</h3>
-  <label>Topic</label>
-  <input id="thumbTopic" placeholder="Video topic">
-  <label>Headline</label>
-  <input id="thumbHeadline" placeholder="Thumbnail की मुख्य लाइन">
-  <label>Subline</label>
-  <input id="thumbSubline" placeholder="छोटी दूसरी लाइन">
-  <br><br>
-  <button onclick="generateThumbnails()">5 Thumbnail Concepts बनाओ</button>
-  <div id="thumbnailResults" class="grid"></div>
+<h2>🧠 AI Tools Desk</h2><p class="muted">किसी एक काम के लिए AI से सहायता लें।</p>
+<label>AI Tool चुनें</label><select id="toolType">
+<option value="Research & Source Collector">Research & Source Collector</option><option value="Independent Fact Checker">Independent Fact Checker</option><option value="Human Scriptwriter">Human Scriptwriter</option><option value="Editorial Quality Controller">Editorial Quality Controller</option><option value="Script Revision Specialist">Script Revision Specialist</option><option value="Final Approval & Quality Score">Final Approval & Quality Score</option><option value="Hook & Retention">Hook & Retention</option><option value="Title Specialist">Title Specialist</option><option value="Thumbnail Designer">Thumbnail Designer</option><option value="SEO Specialist">SEO Specialist</option><option value="Shorts Producer">Shorts Producer</option><option value="Editing Assistant">Editing Assistant</option><option value="Publishing Assistant">Publishing Assistant</option><option value="Analytics Specialist">Analytics Specialist</option><option value="Growth Strategist">Growth Strategist</option><option value="Live Producer">Live Producer</option>
+</select>
+<label>Topic / Instructions</label><textarea id="toolPrompt" placeholder="अपना सवाल या काम लिखें"></textarea>
+<label>Source URLs (optional, हर लाइन में एक)</label><textarea id="toolSourceUrls" placeholder="https://mospi.gov.in/..."></textarea>
+<button id="runToolBtn" onclick="runTool()">AI से तैयार करवाएँ</button><div id="toolOutput"></div>
+<hr style="border-color:var(--border);margin:25px 0"><h3>🖼️ Thumbnail Background Generator</h3>
+<label>Topic</label><input id="thumbTopic" placeholder="Video topic"><label>Headline</label><input id="thumbHeadline" placeholder="Thumbnail की मुख्य लाइन"><label>Subline</label><input id="thumbSubline" placeholder="छोटी दूसरी लाइन"><br><br><button id="thumbBtn" onclick="generateThumbnails()">5 Thumbnail Concepts बनाओ</button><div id="thumbnailResults" class="grid"></div>
 </section>
-
 </section>
 </main>
-
-<footer>Apna Nazariya · Soch Apni, Faisla Aapka</footer>
-<div id="toast"></div>
-
+<footer>Apna Nazariya · Soch Apni, Faisla Aapka</footer><div id="toast"></div>
 <script>
 const $ = id => document.getElementById(id);
+let currentJobId = null, currentProjectId = null, busy = false;
+const agentNames = ["AI Manager","Trend Hunter","Competitor Intelligence","Research & Source Collector","Independent Fact Checker","Human Scriptwriter","Hook & Retention","Editorial Quality Controller","Script Revision Specialist","Final Approval & Quality Score","Title Specialist","Thumbnail Designer","SEO Specialist","Shorts Producer","Live Producer","Editing Assistant","Publishing Assistant","Analytics Specialist","Growth Strategist"];
 
-let currentJobId = null;
-let currentProjectId = null;
-let busy = false;
-
-const agentNames = [
-"AI Manager","Trend Hunter","Competitor Intelligence",
-"Research & Fact Check","Human Scriptwriter","Hook & Retention",
-"Title Specialist","Thumbnail Designer","SEO Specialist",
-"Shorts Producer","Live Producer","Editing Assistant",
-"Publishing Assistant","Analytics Specialist","Growth Strategist"
-];
-
-function toast(message){
-  $("toast").textContent = message;
-  $("toast").style.display = "block";
-  setTimeout(()=>$("toast").style.display="none",2800);
+function toast(message){$("toast").textContent=message;$("toast").style.display="block";setTimeout(()=>$("toast").style.display="none",3000)}
+async function api(path,options={}) {
+ const response=await fetch(path,{credentials:"same-origin",...options,headers:{"Content-Type":"application/json",...(options.headers||{})}});
+ let data;try{data=await response.json()}catch{throw new Error("Server से valid response नहीं मिला।")}
+ if(!response.ok||data.ok===false)throw new Error(data.error||"Request असफल हुआ।");return data;
 }
-
-async function api(path, options={}){
-  const response = await fetch(path,{
-    credentials:"same-origin",
-    ...options,
-    headers:{
-      "Content-Type":"application/json",
-      ...(options.headers||{})
-    }
-  });
-
-  let data;
-  try{data=await response.json()}
-  catch{throw new Error("Server से valid response नहीं मिला।")}
-
-  if(!response.ok || data.ok===false){
-    throw new Error(data.error || "Request असफल हुआ।");
-  }
-  return data;
-}
-
 function copyText(text){
-  if(navigator.clipboard && window.isSecureContext){
-    navigator.clipboard.writeText(text)
-      .then(()=>toast("Copy हो गया ✓"))
-      .catch(()=>fallbackCopy(text));
-  }else fallbackCopy(text);
+ if(navigator.clipboard&&window.isSecureContext){navigator.clipboard.writeText(text).then(()=>toast("Copy हो गया ✓")).catch(()=>fallbackCopy(text))}
+ else fallbackCopy(text);
 }
-
 function fallbackCopy(text){
-  const area=document.createElement("textarea");
-  area.value=text;
-  area.style.position="fixed";
-  area.style.opacity="0";
-  document.body.appendChild(area);
-  area.select();
-  try{
-    document.execCommand("copy");
-    toast("Copy हो गया ✓");
-  }catch{
-    toast("Copy नहीं हुआ। Text select करें।");
-  }
-  area.remove();
+ const area=document.createElement("textarea");area.value=text;area.style.position="fixed";area.style.opacity="0";document.body.appendChild(area);area.select();
+ try{document.execCommand("copy");toast("Copy हो गया ✓")}catch{toast("Copy नहीं हुआ। Text select करें।")}area.remove();
 }
-
 function addOutput(container,title,content){
-  const wrap=document.createElement("div");
-  const head=document.createElement("div");
-  head.className="output-head";
-
-  const strong=document.createElement("strong");
-  strong.textContent=title;
-
-  const button=document.createElement("button");
-  button.className="secondary";
-  button.textContent="📋 Copy";
-  button.onclick=()=>copyText(content);
-
-  const pre=document.createElement("div");
-  pre.className="output";
-  pre.textContent=content;
-
-  head.append(strong,button);
-  wrap.append(head,pre);
-  container.appendChild(wrap);
+ const wrap=document.createElement("div"),head=document.createElement("div"),strong=document.createElement("strong"),button=document.createElement("button"),pre=document.createElement("div");
+ head.className="output-head";strong.textContent=title;button.className="secondary";button.textContent="📋 Copy";button.onclick=()=>copyText(content);
+ pre.className="output";pre.textContent=content;head.append(strong,button);wrap.append(head,pre);container.appendChild(wrap);
 }
-
 async function login(){
-  $("loginMessage").textContent="Login हो रहा है...";
-  try{
-    await api("/api/login",{
-      method:"POST",
-      body:JSON.stringify({
-        loginId:$("loginId").value,
-        password:$("loginPassword").value
-      })
-    });
-    await enterStudio();
-  }catch(error){
-    $("loginMessage").textContent=error.message;
-  }
+ $("loginMessage").textContent="Login हो रहा है...";
+ try{await api("/api/login",{method:"POST",body:JSON.stringify({loginId:$("loginId").value,password:$("loginPassword").value})});await enterStudio()}
+ catch(error){$("loginMessage").textContent=error.message}
 }
-
-async function logout(){
-  try{await api("/api/logout",{method:"POST",body:"{}"})}
-  catch{}
-  $("studio").classList.add("hidden");
-  $("loginScreen").classList.remove("hidden");
-  $("logoutBtn").classList.add("hidden");
-}
-
-async function enterStudio(){
-  $("loginScreen").classList.add("hidden");
-  $("studio").classList.remove("hidden");
-  $("logoutBtn").classList.remove("hidden");
-  buildAgents();
-  await checkHealth();
-  await loadProfile();
-}
-
-async function checkSession(){
-  try{
-    const data=await api("/api/me");
-    if(data.loggedIn) await enterStudio();
-  }catch{}
-}
-
+async function logout(){try{await api("/api/logout",{method:"POST",body:"{}"})}catch{}$("studio").classList.add("hidden");$("loginScreen").classList.remove("hidden");$("logoutBtn").classList.add("hidden")}
+async function enterStudio(){$("loginScreen").classList.add("hidden");$("studio").classList.remove("hidden");$("logoutBtn").classList.remove("hidden");buildAgents();await checkHealth();await loadProfile()}
+async function checkSession(){try{const data=await api("/api/me");if(data.loggedIn)await enterStudio()}catch{}}
 async function checkHealth(){
-  try{
-    const d=await api("/api/health");
-    $("healthStatus").innerHTML=
-      `<span class="good">● API Connected</span> · ${d.version}`;
-  }catch{
-    $("healthStatus").innerHTML=
-      `<span class="bad">● API Connection Error</span>`;
-  }
+ try{const d=await api("/api/health");$("healthStatus").innerHTML=`<span class="good">● API Connected</span> · Version ${d.version}`}
+ catch{$("healthStatus").innerHTML='<span class="bad">● API Connection Error</span>'}
 }
-
-function showTab(name){
-  document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));
-  $("tab-"+name).classList.remove("hidden");
-  document.querySelectorAll("nav button").forEach(b=>{
-    b.classList.toggle("active",b.dataset.tab===name);
-  });
-}
-
-document.querySelectorAll("nav button").forEach(button=>{
-  button.addEventListener("click",()=>showTab(button.dataset.tab));
-});
-
+function showTab(name){document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));$("tab-"+name).classList.remove("hidden");document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.tab===name))}
+document.querySelectorAll("nav button").forEach(button=>button.addEventListener("click",()=>showTab(button.dataset.tab)));
 function buildAgents(){
-  $("agentList").innerHTML="";
-  agentNames.forEach(name=>{
-    const label=document.createElement("label");
-    label.className="agent";
-    const checkbox=document.createElement("input");
-    checkbox.type="checkbox";
-    checkbox.value=name;
-    checkbox.checked=true;
-    label.append(checkbox,document.createTextNode(name));
-    $("agentList").appendChild(label);
-  });
+ $("agentList").innerHTML="";
+ agentNames.forEach(name=>{const label=document.createElement("label"),checkbox=document.createElement("input");label.className="agent";checkbox.type="checkbox";checkbox.value=name;checkbox.checked=true;label.append(checkbox,document.createTextNode(name));$("agentList").appendChild(label)})
 }
-
-function selectAll(value){
-  document.querySelectorAll("#agentList input").forEach(x=>x.checked=value);
-}
-
+function selectAll(value){document.querySelectorAll("#agentList input").forEach(x=>x.checked=value)}
 async function saveProfile(){
-  const body={
-    channelName:$("channelName").value,
-    tagline:$("tagline").value,
-    creatorVoice:$("creatorVoice").value,
-    hostOne:$("hostOne").value,
-    hostTwo:$("hostTwo").value,
-    referenceChannels:$("referenceChannels").value
-      .split("\n").map(x=>x.trim()).filter(Boolean),
-    extraRules:$("extraRules").value
-  };
-
-  try{
-    await api("/api/profile",{method:"POST",body:JSON.stringify(body)});
-    $("profileMessage").textContent=" ✓ Profile saved";
-    toast("Profile Save हो गई");
-  }catch(error){
-    $("profileMessage").textContent=error.message;
-  }
+ const body={channelName:$("channelName").value,tagline:$("tagline").value,creatorVoice:$("creatorVoice").value,hostOne:$("hostOne").value,hostTwo:$("hostTwo").value,referenceChannels:$("referenceChannels").value.split("\n").map(x=>x.trim()).filter(Boolean),extraRules:$("extraRules").value};
+ try{await api("/api/profile",{method:"POST",body:JSON.stringify(body)});$("profileMessage").textContent=" ✓ Profile saved";toast("Profile Save हो गई")}
+ catch(error){$("profileMessage").textContent=error.message}
 }
-
 async function loadProfile(){
-  try{
-    const data=await api("/api/profile");
-    const p=data.profile||{};
-    const fields=["channelName","tagline","creatorVoice","hostOne","hostTwo","extraRules"];
-    fields.forEach(key=>{
-      if(p[key]!==undefined) $(key).value=p[key];
-    });
-    $("referenceChannels").value=(p.referenceChannels||[]).join("\n");
-  }catch(error){
-    toast("Profile load: "+error.message);
-  }
+ try{const data=await api("/api/profile"),p=data.profile||{};["channelName","tagline","creatorVoice","hostOne","hostTwo","extraRules"].forEach(key=>{if(p[key]!==undefined)$(key).value=p[key]});$("referenceChannels").value=(p.referenceChannels||[]).join("\n")}
+ catch(error){toast("Profile load: "+error.message)}
 }
-
+function lines(id){return $(id).value.split("\n").map(x=>x.trim()).filter(Boolean)}
 async function startWorkflow(){
-  if(busy)return;
-
-  const topic=$("topic").value.trim();
-  if(!topic){toast("पहले Topic लिखें");return}
-
-  const agents=[...document.querySelectorAll("#agentList input:checked")]
-    .map(x=>x.value);
-
-  if(!agents.length){toast("कम से कम एक Agent चुनें");return}
-
-  busy=true;
-  $("startBtn").disabled=true;
-
-  try{
-    const data=await api("/api/workflow/start",{
-      method:"POST",
-      body:JSON.stringify({
-        topic,
-        format:$("format").value,
-        duration:$("duration").value,
-        instructions:$("instructions").value,
-        agents
-      })
-    });
-
-    currentJobId=data.jobId;
-    currentProjectId=data.projectId;
-
-    $("workflowArea").classList.remove("hidden");
-    $("workflowOutputs").innerHTML="";
-    $("workflowStatus").textContent="Queued";
-    $("progressText").textContent=`0 / ${data.totalSteps} agents complete`;
-
-    toast("Production Project बन गया!");
-    await updateStatus();
-  }catch(error){
-    toast(error.message);
-  }finally{
-    busy=false;
-    $("startBtn").disabled=false;
-  }
+ if(busy)return;const topic=$("topic").value.trim();if(!topic){toast("पहले Topic लिखें");return}
+ const agents=[...document.querySelectorAll("#agentList input:checked")].map(x=>x.value);if(!agents.length){toast("कम से कम एक Agent चुनें");return}
+ if(lines("sourceUrls").length>5){toast("अधिकतम 5 source URLs दें");return}
+ busy=true;$("startBtn").disabled=true;
+ try{
+  const data=await api("/api/workflow/start",{method:"POST",body:JSON.stringify({topic,format:$("format").value,duration:$("duration").value,instructions:$("instructions").value,sourceUrls:lines("sourceUrls"),agents})});
+  currentJobId=data.jobId;currentProjectId=data.projectId;$("workflowArea").classList.remove("hidden");$("workflowOutputs").innerHTML="";$("workflowStatus").textContent="Queued";$("progressText").textContent=`0 / ${data.totalSteps} agents complete`;toast("Production Project बन गया!");await updateStatus();
+ }catch(error){toast(error.message)}finally{busy=false;$("startBtn").disabled=false}
 }
-
 async function runNext(){
-  if(!currentJobId || busy)return;
-  busy=true;
-  $("nextBtn").disabled=true;
-
-  try{
-    const data=await api("/api/workflow/step",{
-      method:"POST",
-      body:JSON.stringify({jobId:currentJobId})
-    });
-
-    if(data.output){
-      addOutput($("workflowOutputs"),data.agent,data.output);
-    }
-
-    await updateStatus();
-
-    if(data.completed)toast("Production Workflow पूरा हुआ! 🎉");
-  }catch(error){
-    toast(error.message);
-    await updateStatus();
-  }finally{
-    busy=false;
-    $("nextBtn").disabled=false;
-  }
+ if(!currentJobId||busy)return;busy=true;$("nextBtn").disabled=true;
+ try{const data=await api("/api/workflow/step",{method:"POST",body:JSON.stringify({jobId:currentJobId})});await updateStatus();if(data.agent)toast(data.agent+" पूरा हुआ ✓");if(data.completed)toast("Production Workflow पूरा हुआ! 🎉")}
+ catch(error){toast(error.message);await updateStatus().catch(()=>{})}
+ finally{busy=false;await updateStatus().catch(()=>{})}
 }
-
+async function runAllRemaining(){
+ if(!currentJobId||busy)return;busy=true;$("runAllBtn").disabled=true;$("nextBtn").disabled=true;
+ try{
+  for(let i=0;i<25;i++){
+   const data=await api("/api/workflow/step",{method:"POST",body:JSON.stringify({jobId:currentJobId})});
+   await updateStatus();
+   if(data.needsReview){toast("Editorial review जरूरी है — आगे बढ़ने से पहले रिपोर्ट देखें।");break}
+   if(data.completed){toast("पूरा Production Workflow समाप्त! 🎉");break}
+  }
+ }catch(error){toast(error.message);await updateStatus().catch(()=>{})}
+ finally{busy=false;await updateStatus().catch(()=>{});}
+}
+async function continueAfterReview(){
+ if(!currentJobId)return;$("continueReviewBtn").disabled=true;
+ try{await api("/api/workflow/continue",{method:"POST",body:JSON.stringify({jobId:currentJobId})});toast("Human review दर्ज — workflow आगे बढ़ रहा है।");await updateStatus()}
+ catch(error){toast(error.message)}finally{$("continueReviewBtn").disabled=false}
+}
 async function updateStatus(){
-  if(!currentJobId)return;
-
-  const data=await api(
-    "/api/workflow/status?jobId="+encodeURIComponent(currentJobId)
-  );
-
-  const job=data.job;
-  const agents=data.agents||[];
-  const completed=agents.filter(x=>x.status==="completed").length;
-  const total=agents.length;
-  const percent=total?Math.round(completed/total*100):0;
-
-  $("workflowStatus").textContent=job.status;
-  $("progressBar").style.width=percent+"%";
-  $("progressText").textContent=`${completed} / ${total} agents complete (${percent}%)`;
-
-  if(job.status==="completed"){
-    $("nextBtn").disabled=true;
-  }else{
-    $("nextBtn").disabled=false;
-  }
-
-  $("workflowOutputs").innerHTML="";
-  agents.forEach(agent=>{
-    if(agent.status==="completed" && agent.output){
-      addOutput($("workflowOutputs"),agent.agent_name,agent.output);
-    }else if(agent.status==="error"){
-      const p=document.createElement("p");
-      p.className="bad";
-      p.textContent=agent.agent_name+": "+(agent.error||"Error");
-      $("workflowOutputs").appendChild(p);
-    }
-  });
+ if(!currentJobId)return;const data=await api("/api/workflow/status?jobId="+encodeURIComponent(currentJobId)),job=data.job,agents=data.agents||[];
+ const completed=agents.filter(x=>x.status==="completed").length,total=agents.length,percent=total?Math.round(completed/total*100):0;
+ $("workflowStatus").textContent=job.status;$("progressBar").style.width=percent+"%";$("progressText").textContent=`${completed} / ${total} agents complete (${percent}%)`;
+ const blocked=job.status==="needs_review";$("reviewGate").classList.toggle("hidden",!blocked);
+ $("nextBtn").disabled=job.status==="completed"||job.status==="paused"||blocked;
+ $("runAllBtn").disabled=job.status==="completed"||job.status==="paused"||blocked;
+ $("workflowOutputs").innerHTML="";
+ agents.forEach(agent=>{if(agent.status==="completed"&&agent.output)addOutput($("workflowOutputs"),agent.agent_name,agent.output);else if(agent.status==="error"){const p=document.createElement("p");p.className="bad";p.textContent=agent.agent_name+": "+(agent.error||"Error");$("workflowOutputs").appendChild(p)}else if(agent.status==="blocked"){const p=document.createElement("p");p.className="muted";p.textContent=agent.agent_name+": Human review pending";$("workflowOutputs").appendChild(p)}});
 }
-
 async function resumeWorkflow(){
-  if(!currentJobId)return;
-  try{
-    await api("/api/workflow/resume",{
-      method:"POST",
-      body:JSON.stringify({jobId:currentJobId})
-    });
-    toast("Workflow Resume हो गया");
-    await updateStatus();
-  }catch(error){toast(error.message)}
+ if(!currentJobId)return;try{await api("/api/workflow/resume",{method:"POST",body:JSON.stringify({jobId:currentJobId})});toast("Workflow Resume हो गया");await updateStatus()}
+ catch(error){toast(error.message)}
 }
-
 async function runTool(){
-  const name=$("toolType").value;
-  const prompt=$("toolPrompt").value.trim();
-  if(!prompt){toast("पहले instructions लिखें");return}
-
-  const profile=await api("/api/profile");
-  const systemRules=`
-${name} के रूप में काम करो।
-${profile.profile?.creatorVoice||""}
-Host 1: ${profile.profile?.hostOne||""}
-Host 2: ${profile.profile?.hostTwo||""}
-${profile.profile?.extraRules||""}
-${name} के task के अनुसार output दो।
-`;
-
-  const fullPrompt=systemRules+"\n\n"+prompt;
-  $("toolOutput").innerHTML="<p class='muted'>AI काम कर रहा है...</p>";
-
-  try{
-    const data=await api("/api/ai",{
-      method:"POST",
-      body:JSON.stringify({prompt:fullPrompt})
-    });
-    $("toolOutput").innerHTML="";
-    addOutput($("toolOutput"),name,data.output);
-  }catch(error){
-    $("toolOutput").textContent=error.message;
-  }
+ const name=$("toolType").value,prompt=$("toolPrompt").value.trim();if(!prompt){toast("पहले instructions लिखें");return}
+ if(lines("toolSourceUrls").length>5){toast("अधिकतम 5 source URLs दें");return}
+ $("runToolBtn").disabled=true;$("toolOutput").innerHTML="<p class='muted'>AI काम कर रहा है...</p>";
+ try{
+  const profile=await api("/api/profile"),p=profile.profile||{};
+  const systemRules=`तुम ${name} के रूप में काम करो।\n${p.creatorVoice||""}\nHost 1: ${p.hostOne||""}\nHost 2: ${p.hostTwo||""}\n${p.extraRules||""}\nTask को पूरा output दो, केवल outline नहीं।\n${name==="Human Scriptwriter"?"पूरी बोलने योग्य two-host script लिखो।":""}`;
+  const data=await api("/api/ai",{method:"POST",body:JSON.stringify({prompt:systemRules+"\n\n"+prompt,sourceUrls:lines("toolSourceUrls")})});
+  $("toolOutput").innerHTML="";addOutput($("toolOutput"),name,data.output);
+  if(data.sourcesRead)toast(data.sourcesRead+" sources पढ़े गए");
+  if(data.sourceErrors?.length){const note=document.createElement("p");note.className="bad";note.textContent="कुछ sources नहीं पढ़े जा सके: "+data.sourceErrors.map(x=>x.error).join(" | ");$("toolOutput").appendChild(note)}
+ }catch(error){$("toolOutput").textContent=error.message}
+ finally{$("runToolBtn").disabled=false}
 }
-
 async function loadProjects(){
-  $("projectList").textContent="Loading...";
-  try{
-    const data=await api("/api/projects");
-    $("projectList").innerHTML="";
-
-    if(!data.projects.length){
-      $("projectList").textContent="अभी कोई project नहीं है।";
-      return;
-    }
-
-    data.projects.forEach(project=>{
-      const div=document.createElement("div");
-      div.className="project";
-
-      const info=document.createElement("div");
-      const title=document.createElement("strong");
-      title.textContent=project.topic||"Untitled";
-      const meta=document.createElement("div");
-      meta.className="small";
-      meta.textContent=(project.status||"")+
-        " · "+(project.created_at||"");
-      info.append(title,meta);
-
-      const button=document.createElement("button");
-      button.className="secondary";
-      button.textContent="Open";
-      button.onclick=()=>openProject(project.id);
-
-      div.append(info,button);
-      $("projectList").appendChild(div);
-    });
-  }catch(error){
-    $("projectList").textContent=error.message;
-  }
+ $("projectList").textContent="Loading...";
+ try{
+  const data=await api("/api/projects");$("projectList").innerHTML="";
+  if(!data.projects.length){$("projectList").textContent="अभी कोई project नहीं है।";return}
+  data.projects.forEach(project=>{
+   const div=document.createElement("div"),info=document.createElement("div"),title=document.createElement("strong"),meta=document.createElement("div"),button=document.createElement("button");
+   div.className="project";title.textContent=project.topic||"Untitled";meta.className="small";meta.textContent=(project.status||"")+" · "+(project.created_at||"");info.append(title,meta);
+   button.className="secondary";button.textContent="Open";button.onclick=()=>openProject(project.id);div.append(info,button);$("projectList").appendChild(div);
+  });
+ }catch(error){$("projectList").textContent=error.message}
 }
-
 async function openProject(id){
-  try{
-    const data=await api("/api/projects/"+encodeURIComponent(id));
-    $("projectDetail").innerHTML="";
-    const heading=document.createElement("h3");
-    heading.textContent=data.project.topic;
-    $("projectDetail").appendChild(heading);
-
-    (data.outputs||[]).forEach(item=>{
-      addOutput($("projectDetail"),item.agent_name,item.content);
-    });
-  }catch(error){
-    toast(error.message);
-  }
+ try{const data=await api("/api/projects/"+encodeURIComponent(id));$("projectDetail").innerHTML="";const heading=document.createElement("h3");heading.textContent=data.project.topic;$("projectDetail").appendChild(heading);(data.outputs||[]).forEach(item=>addOutput($("projectDetail"),item.agent_name,item.content))}
+ catch(error){toast(error.message)}
 }
-
 async function generateThumbnails(){
-  const topic=$("thumbTopic").value.trim();
-  if(!topic){toast("Topic लिखें");return}
-
-  $("thumbnailResults").innerHTML="<p>Generating...</p>";
-
-  try{
-    const data=await api("/api/thumbnails/generate",{
-      method:"POST",
-      body:JSON.stringify({
-        topic,
-        headline:$("thumbHeadline").value,
-        subline:$("thumbSubline").value
-      })
-    });
-
-    $("thumbnailResults").innerHTML="";
-
-    data.thumbnails.forEach(item=>{
-      const card=document.createElement("div");
-      card.className="panel";
-
-      const name=document.createElement("h3");
-      name.textContent=item.name;
-      card.appendChild(name);
-
-      if(item.image){
-        const img=document.createElement("img");
-        img.src=item.image;
-        img.alt=item.name;
-        img.style.width="100%";
-        img.style.borderRadius="8px";
-        card.appendChild(img);
-
-        const download=document.createElement("a");
-        download.href=item.image;
-        download.download="apna-nazariya-thumbnail-"+item.id+".jpg";
-        download.textContent="Download Background";
-        download.style.display="inline-block";
-        download.style.marginTop="10px";
-        download.style.color="#e8a34a";
-        card.appendChild(download);
-      }else{
-        const error=document.createElement("p");
-        error.textContent=item.error||"Generation failed";
-        card.appendChild(error);
-      }
-
-      $("thumbnailResults").appendChild(card);
-    });
-
-    toast(data.successful+" thumbnail backgrounds तैयार");
-  }catch(error){
-    $("thumbnailResults").textContent=error.message;
-  }
+ const topic=$("thumbTopic").value.trim();if(!topic){toast("Topic लिखें");return}
+ $("thumbBtn").disabled=true;$("thumbnailResults").innerHTML="<p>Generating... इसमें समय लग सकता है।</p>";
+ try{
+  const data=await api("/api/thumbnails/generate",{method:"POST",body:JSON.stringify({topic,headline:$("thumbHeadline").value,subline:$("thumbSubline").value})});
+  $("thumbnailResults").innerHTML="";
+  data.thumbnails.forEach(item=>{
+   const card=document.createElement("div"),name=document.createElement("h3");card.className="panel";name.textContent=item.name;card.appendChild(name);
+   if(item.image){const img=document.createElement("img");img.src=item.image;img.alt=item.name;img.style.width="100%";img.style.borderRadius="8px";card.appendChild(img);
+    const download=document.createElement("a");download.href=item.image;download.download="apna-nazariya-thumbnail-"+item.id+".jpg";download.textContent="Download Background";download.style.display="inline-block";download.style.marginTop="10px";download.style.color="#e8a34a";card.appendChild(download)
+   }else{const error=document.createElement("p");error.textContent=item.error||"Generation failed";card.appendChild(error)}
+   $("thumbnailResults").appendChild(card)
+  });toast(data.successful+" thumbnail backgrounds तैयार")
+ }catch(error){$("thumbnailResults").textContent=error.message}
+ finally{$("thumbBtn").disabled=false}
 }
-
 checkSession();
 </script>
 </body>
