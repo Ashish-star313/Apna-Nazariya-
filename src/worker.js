@@ -1,1171 +1,866 @@
-
 const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
-
 const SESSION_DAYS = 14;
 const MAX_PROMPT_LENGTH = 12000;
 const MAX_OUTPUT_CONTEXT = 9000;
-const MAX_THUMBNAIL_TOPIC = 500;
 
 const BASE_RULES = `
-तुम Apna Nazariya के अनुभवी Hindi YouTube Production Assistant हो।
+तुम Apna Nazariya के अनुभवी Hindi YouTube Production Team हो।
+Channel tagline: सोच अपनी, फैसला आपका।
 
-ब्रांड: अपना नज़रिया
-टैगलाइन: सोच अपनी, फैसला आपका।
-भाषा: सरल, स्वाभाविक बोलचाल वाली हिंदी, हल्का UP/desi touch।
-दो भाइयों की बातचीत वास्तविक लगे, टीवी डिबेट जैसी नहीं।
+भाषा:
+- सरल बोलचाल वाली हिंदी, हल्का UP/desi touch।
+- दो भाइयों की स्वाभाविक बातचीत।
+- टीवी एंकर जैसी चिल्लाहट या नकली बहस नहीं।
+- Host 1: गंभीर, डेटा और सिस्टम पर ध्यान।
+- Host 2: आम आदमी, युवा और जमीनी नजरिया।
 
-EDITORIAL RULES:
-1. तथ्य, राय, आरोप और अनुमान अलग-अलग रखो।
-2. बिना प्रमाण कोई आँकड़ा, तारीख, बयान या स्रोत मत बनाओ।
-3. स्रोत उपलब्ध न हो तो UNVERIFIED बताओ।
-4. काल्पनिक उदाहरण को वास्तविक घटना मत बताओ।
-5. Misleading clickbait मत बनाओ।
-6. दूसरे Creators की स्क्रिप्ट कॉपी मत करो।
-7. अपनी तरफ से live browsing या YouTube research करने का दावा मत करो।
-8. उपलब्ध जानकारी और assumptions अलग रखो।
-9. जरूरी जानकारी गायब हो तो स्पष्ट बताओ।
-10. हर जवाब उपयोगी, स्पष्ट और व्यवस्थित होना चाहिए।
+Editorial Rules:
+- तथ्य, राय, आरोप और अनुमान अलग-अलग बताओ।
+- कोई आंकड़ा, तारीख, बयान, स्रोत या घटना invent मत करो।
+- उपलब्ध जानकारी से सत्यापन संभव न हो तो UNVERIFIED लिखो।
+- किसी राजनीतिक दल या व्यक्ति पर बिना प्रमाण आरोप मत लगाओ।
+- Research में स्रोतों के नाम और URLs दो, लेकिन यह दावा मत करो कि URL खोलकर सत्यापन किया है।
+- पुरानी जानकारी को वर्तमान बताकर पेश मत करो।
+- Script में बोलने लायक भाषा हो, निबंध जैसी भाषा नहीं।
+- दोनों hosts को संतुलित बोलने का समय दो।
+- अंत में: सोच अपनी, फैसला आपका।
 
-IMPORTANT:
-इस Worker AI API में live web browsing उपलब्ध नहीं है।
-दिए गए URLs अपने आप खुलने या verify होने की गारंटी नहीं है।
-बिना वास्तविक प्रमाण किसी claim को VERIFIED मत बताना।
+कभी भी fabricated citations या fake statistics मत देना।
 `;
 
 const AGENTS = {
-  "AI Manager": `
-तुम Executive Producer हो।
-काम को छोटे और स्पष्ट चरणों में बाँटो।
-दिए गए काम के अनुसार specialist की भूमिका समझो।
-Missing information, risks और quality checklist बताओ।
-अंत में अगले Agent के लिए उपयोगी निर्देश दो।
-`,
-  "Trend Hunter": `
-तुम Topic Research Planner हो।
-Audience relevance, timeliness, interest और verification difficulty का विश्लेषण करो।
-Live trend data उपलब्ध न होने पर साफ बताओ।
-पुराने ज्ञान को आज का trend मत बताओ।
-5 practical topic angles और उनके verification points दो।
-`,
-  "Competitor Intelligence": `
-तुम Competitor Analysis Specialist हो।
-केवल दिए गए URLs, transcripts और data का विश्लेषण करो।
-Titles, hooks, formats, audience questions और content gaps समझाओ।
-अज्ञात views, CTR या analytics मत बनाओ।
-किसी creator की script copy मत करो।
-`,
-  "Research & Fact Check": `
-तुम Research और Fact Check Specialist हो।
-मुख्य factual claims अलग-अलग सूचीबद्ध करो।
-हर claim के लिए दावा, उपलब्ध प्रमाण, दिया गया स्रोत URL,
-तारीख, स्थिति और आगे क्या जाँचना चाहिए बताओ।
-बिना स्रोत किसी claim को VERIFIED मत बताना।
-`,
-  "Human Scriptwriter": `
-तुम Apna Nazariya के मुख्य Human Scriptwriter हो।
-दो असली भारतीय भाइयों की स्वाभाविक बातचीत लिखो।
-
-STYLE:
-- रोजमर्रा की हिंदी।
-- छोटे और मध्यम संवाद।
-- भारी भाषण और फिल्मी नाटकीयता से बचो।
-- दोनों Hosts की आवाज और नजरिया अलग रखो।
-- नकली बहस या नकली सहमति मत बनाओ।
-- प्रमाणित उदाहरण ही वास्तविक घटना की तरह लिखो।
-- काल्पनिक उदाहरण को काल्पनिक बताओ।
-
-STRUCTURE:
-1. मजबूत Hook।
-2. आम आदमी की समस्या।
-3. Host 1 का नजरिया।
-4. Host 2 का सवाल या अलग तर्क।
-5. दोनों पक्षों की कमजोरियाँ और मजबूती।
-6. उपलब्ध तथ्य और Source Notes।
-7. दर्शक के लिए नया नजरिया।
-8. अंत में सोचने वाला सवाल और CTA।
-
-पहले 3 Hook विकल्प दो।
-फिर पूरी बातचीत।
-Speaker names Host 1 और Host 2 रखो।
-अनुमानित समय बताओ।
-अंत में Source Notes और Unverified Claims दो।
-`,
-  "Hook & Retention": `
-पहले 30 सेकंड के लिए 5 अलग Hook बनाओ।
-Curiosity और clarity बढ़ाओ।
-झूठा suspense मत बनाओ।
-Pacing, transitions और repetition की समीक्षा करो।
-`,
-  "Title Specialist": `
-12 YouTube Titles बनाओ।
-Top 3 को clarity, curiosity और relevance के आधार पर rank करो।
-Misleading clickbait मत बनाओ।
-`,
-  "Thumbnail Designer": `
-तुम Apna Nazariya के Thumbnail Art Director हो।
-एक वीडियो के लिए 5 अलग-अलग thumbnail concepts बनाओ।
-हर concept में visual composition, background, main subject,
-expression, Hindi headline (2-5 शब्द), headline color,
-text placement, contrast और mobile readability बताओ।
-Fabricated evidence या misleading visuals मत सुझाओ।
-`,
-  "SEO Specialist": `
-Accurate YouTube description, chapters, keywords,
-hashtags, source links और pinned comment बनाओ।
-Keyword stuffing मत करो।
-`,
-  "Shorts Producer": `
-दिए गए transcript से standalone Shorts ideas बनाओ।
-Hook, timestamps केवल उपलब्ध हों तो,
-caption, title और CTA दो।
-बात का अर्थ बदलकर प्रस्तुत मत करो।
-`,
-  "Live Producer": `
-दो Android फोन से दो-host live show का run-of-show बनाओ।
-Timing, speaker turns, audience questions,
-moderation और backup checklist दो।
-`,
-  "Analytics Specialist": `
-केवल दिए गए वास्तविक YouTube Studio data का विश्लेषण करो।
-CTR, retention, views या subscribers खुद से मत बनाओ।
-जहाँ data नहीं है, साफ बताओ।
-`,
-  "Growth Strategist": `
-Channel growth के लिए practical weekly plan बनाओ।
-Actual analytics और assumptions अलग रखो।
-हर सुझाव के साथ उद्देश्य और measurement बताओ।
-`
+  "AI Manager": {
+    role: "Executive Producer",
+    task: "पूरे वीडियो प्रोजेक्ट की योजना बनाओ। Topic का angle, audience, format, research requirements और production checklist तैयार करो।"
+  },
+  "Trend Hunter": {
+    role: "Trend Researcher",
+    task: "दिए गए विषय के संभावित trend angles, audience interest, search intent और discussion opportunities बताओ। Live trend होने का दावा मत करना।"
+  },
+  "Competitor Intelligence": {
+    role: "Competitor Analyst",
+    task: "दिए गए reference channels और topic के आधार पर content positioning, presentation patterns, gaps और differentiation strategy बताओ। बिना देखे किसी channel के बारे में specific claims मत करना।"
+  },
+  "Research & Fact Check": {
+    role: "Research Editor",
+    task: "Topic के लिए research brief बनाओ। हर claim को VERIFIED FROM PROVIDED MATERIAL, NEEDS SOURCE या UNVERIFIED में classify करो। संभावित authoritative sources बताओ। कोई data invent मत करना।"
+  },
+  "Human Scriptwriter": {
+    role: "Hindi Scriptwriter",
+    task: "दो hosts के लिए पूरी natural conversational Hindi YouTube script लिखो। Hook, context, facts, दोनों पक्ष, examples, transitions, conclusion और CTA शामिल करो।"
+  },
+  "Hook & Retention": {
+    role: "Retention Editor",
+    task: "पहले 30 seconds के hooks, curiosity loops, pattern interrupts, transitions और retention improvements बनाओ।"
+  },
+  "Title Specialist": {
+    role: "YouTube Title Editor",
+    task: "वीडियो के लिए 10 आकर्षक लेकिन ईमानदार titles बनाओ। Clickbait और misleading claims से बचो। Best title चुनकर कारण बताओ।"
+  },
+  "Thumbnail Designer": {
+    role: "Thumbnail Creative Director",
+    task: "तीन अलग thumbnail concepts बनाओ। हर concept में मुख्य visual, headline, subline, subject placement, contrast और emotional angle बताओ।"
+  },
+  "SEO Specialist": {
+    role: "YouTube SEO Editor",
+    task: "Description, relevant keywords, tags, chapters और hashtags बनाओ। Unrelated trending keywords मत जोड़ो।"
+  },
+  "Shorts Producer": {
+    role: "Short-form Producer",
+    task: "Long video से 3-5 Shorts concepts निकालो। हर Short के लिए hook, spoken script, suggested visuals और CTA दो।"
+  },
+  "Live Producer": {
+    role: "Live Show Producer",
+    task: "Live show rundown, host handoffs, audience questions, discussion segments और moderation checklist बनाओ।"
+  },
+  "Editing Assistant": {
+    role: "Video Editing Supervisor",
+    task: "दो अलग Android phones पर रिकॉर्ड हुए footage को synchronize और edit करने की step-by-step योजना दो। Timeline, cuts, B-roll, captions, audio cleanup, transitions, music levels और export settings बताओ। किसी app को खुद operate करने का दावा मत करना।"
+  },
+  "Publishing Assistant": {
+    role: "Publishing Manager",
+    task: "YouTube upload checklist, title, description, thumbnail, playlist, audience settings, subtitles, pinned comment, end screen और publishing schedule तैयार करो। Upload खुद करने का दावा मत करना।"
+  },
+  "Analytics Specialist": {
+    role: "YouTube Data Analyst",
+    task: "दिए गए analytics का विश्लेषण करो। CTR, impressions, views, average view duration, retention और traffic sources के आधार पर actionable insights दो। आंकड़े न दिए हों तो invent मत करो।"
+  },
+  "Growth Strategist": {
+    role: "Channel Growth Strategist",
+    task: "Channel के लिए practical growth plan, content pillars, weekly schedule, improvement priorities और next-video experiments बनाओ।"
+  }
 };
 
-// COMMON HELPERS
+const DEFAULT_SEQUENCE = [
+  "AI Manager",
+  "Trend Hunter",
+  "Competitor Intelligence",
+  "Research & Fact Check",
+  "Human Scriptwriter",
+  "Hook & Retention",
+  "Title Specialist",
+  "Thumbnail Designer",
+  "SEO Specialist",
+  "Shorts Producer",
+  "Editing Assistant",
+  "Publishing Assistant",
+  "Analytics Specialist",
+  "Growth Strategist"
+];
 
-function json(data, status = 200, headers = {}) {
-  return Response.json(data, {
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "GET,POST,OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type,X-Project-PIN",
+  "Content-Type": "application/json; charset=utf-8"
+};
+
+function json(data, status = 200) {
+  return new Response(JSON.stringify(data), {
     status,
-    headers: {
-      "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
-      ...headers
-    }
+    headers: corsHeaders
   });
 }
 
-function getCookie(request, name) {
-  const cookie = request.headers.get("Cookie") || "";
-  for (const part of cookie.split(";")) {
-    const index = part.indexOf("=");
-    if (index < 0) continue;
-    const key = part.slice(0, index).trim();
-    const value = part.slice(index + 1).trim();
-    if (key === name) return value;
-  }
-  return "";
+function now() {
+  return new Date().toISOString();
 }
 
-function makeCookie(token, maxAge) {
-  return [
-    `an_session=${token}`,
-    "Path=/",
-    "HttpOnly",
-    "Secure",
-    "SameSite=Lax",
-    `Max-Age=${maxAge}`
-  ].join("; ");
-}
-
-async function sha256(value) {
-  const data = new TextEncoder().encode(value);
-  const digest = await crypto.subtle.digest("SHA-256", data);
-  return Array.from(new Uint8Array(digest))
-    .map(x => x.toString(16).padStart(2, "0"))
-    .join("");
+function uuid() {
+  return crypto.randomUUID();
 }
 
 function randomToken() {
   const bytes = crypto.getRandomValues(new Uint8Array(32));
-  return Array.from(bytes)
-    .map(x => x.toString(16).padStart(2, "0"))
-    .join("");
+  return Array.from(bytes, b => b.toString(16).padStart(2, "0")).join("");
+}
+
+async function sha256(value) {
+  const data = new TextEncoder().encode(value);
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash), b =>
+    b.toString(16).padStart(2, "0")
+  ).join("");
+}
+
+function cookieValue(request, name) {
+  const cookie = request.headers.get("Cookie") || "";
+  const match = cookie.match(new RegExp("(?:^|;\\s*)" + name + "=([^;]+)"));
+  return match ? match[1] : null;
+}
+
+function cookieHeader(token, maxAge = SESSION_DAYS * 86400) {
+  return `an_session=${token}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=${maxAge}`;
+}
+
+function clearCookie() {
+  return "an_session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0";
 }
 
 function safeEqual(a, b) {
-  const encoder = new TextEncoder();
-  const x = encoder.encode(String(a || ""));
-  const y = encoder.encode(String(b || ""));
-  let diff = x.length ^ y.length;
-  const max = Math.max(x.length, y.length);
-  for (let i = 0; i < max; i++) {
-    diff |= (x[i] || 0) ^ (y[i] || 0);
+  if (typeof a !== "string" || typeof b !== "string") return false;
+  if (a.length !== b.length) return false;
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
   }
-  return diff === 0;
-}
-
-function sameOrigin(request, url) {
-  const origin = request.headers.get("Origin");
-  if (!origin) return true;
-  try {
-    return new URL(origin).origin === url.origin;
-  } catch {
-    return false;
-  }
-}
-
-function makeId() {
-  return crypto.randomUUID();
+  return result === 0;
 }
 
 async function readBody(request) {
   try {
-    return await request.json();
+    const body = await request.json();
+    return body && typeof body === "object" ? body : {};
   } catch {
-    return null;
+    return {};
   }
 }
 
-// AUTHENTICATION
+async function ensureSchema(env) {
+  const statements = [
+    `CREATE TABLE IF NOT EXISTS login_sessions (
+      token_hash TEXT PRIMARY KEY,
+      expires_at TEXT NOT NULL
+    )`,
+    `CREATE TABLE IF NOT EXISTS settings (
+      key TEXT PRIMARY KEY,
+      value TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS channels (
+      id TEXT PRIMARY KEY,
+      url TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      topic TEXT,
+      status TEXT,
+      created_at TEXT,
+      updated_at TEXT,
+      input_json TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS workflow_jobs (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      status TEXT,
+      current_step INTEGER DEFAULT 0,
+      total_steps INTEGER DEFAULT 0,
+      error TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS agent_runs (
+      id TEXT PRIMARY KEY,
+      job_id TEXT,
+      project_id TEXT,
+      agent_name TEXT,
+      status TEXT,
+      output TEXT,
+      error TEXT,
+      created_at TEXT,
+      updated_at TEXT
+    )`,
+    `CREATE TABLE IF NOT EXISTS project_outputs (
+      id TEXT PRIMARY KEY,
+      project_id TEXT,
+      agent_name TEXT,
+      content TEXT,
+      created_at TEXT
+    )`
+  ];
+
+  for (const sql of statements) {
+    await env.DB.prepare(sql).run();
+  }
+}
 
 async function authenticate(request, env) {
-  const token = getCookie(request, "an_session");
-  if (!token || !env.DB) return null;
+  const token = cookieValue(request, "an_session");
+  if (!token) return false;
 
   const tokenHash = await sha256(token);
-  const session = await env.DB.prepare(`
-    SELECT id, expires_at
-    FROM login_sessions
-    WHERE token_hash = ?
-    LIMIT 1
-  `).bind(tokenHash).first();
+  const row = await env.DB.prepare(
+    "SELECT token_hash, expires_at FROM login_sessions WHERE token_hash = ?"
+  ).bind(tokenHash).first();
 
-  if (!session) return null;
+  if (!row) return false;
 
-  if (new Date(session.expires_at).getTime() <= Date.now()) {
+  if (new Date(row.expires_at).getTime() < Date.now()) {
     await env.DB.prepare(
-      "DELETE FROM login_sessions WHERE id = ?"
-    ).bind(session.id).run();
-    return null;
+      "DELETE FROM login_sessions WHERE token_hash = ?"
+    ).bind(tokenHash).run();
+    return false;
   }
 
-  await env.DB.prepare(`
-    UPDATE login_sessions
-    SET last_seen_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(session.id).run();
-
-  return { id: session.id, tokenHash };
+  return true;
 }
 
-// TEXT AI
+async function requireAuth(request, env) {
+  return await authenticate(request, env);
+}
 
-async function runModel(env, systemPrompt, userPrompt) {
-  if (!env.AI) throw new Error("AI binding missing");
+async function runModel(env, systemPrompt, userPrompt, maxTokens = 2200) {
+  if (!env.AI) throw new Error("Cloudflare AI binding उपलब्ध नहीं है।");
 
   const result = await env.AI.run(MODEL, {
     messages: [
       { role: "system", content: systemPrompt },
       { role: "user", content: userPrompt }
     ],
-    chat_template_kwargs: { enable_thinking: false },
-    max_tokens: 1800,
+    max_tokens: maxTokens,
     temperature: 0.65
   });
 
-  const answer =
-    result?.choices?.[0]?.message?.content ||
-    result?.response ||
-    "";
+  let output = result?.response || result?.result?.response || "";
 
-  if (typeof answer !== "string" || !answer.trim()) {
-    throw new Error("Model returned an empty answer");
+  if (!output && typeof result === "string") output = result;
+  if (!output && result?.output_text) output = result.output_text;
+
+  if (!output || !String(output).trim()) {
+    throw new Error("AI से खाली जवाब मिला। दोबारा कोशिश करें।");
   }
 
-  return answer.trim();
-}
-
-// THUMBNAIL GENERATOR
-
-const THUMBNAIL_STYLES = [
-  {
-    id: "breaking",
-    name: "Breaking Issue",
-    description: "गंभीर और प्रभावशाली Current Affairs Style",
-    prompt: "dramatic Indian current affairs documentary photography, cinematic red and black lighting, serious atmosphere, strong visual contrast, realistic Indian environment, main visual subject on right side, clean empty dark space on left for editable headline"
-  },
-  {
-    id: "ground",
-    name: "Ground Reality",
-    description: "आम आदमी और जमीनी मुद्दों वाला अंदाज",
-    prompt: "realistic photojournalistic Indian social documentary, everyday Indian street environment, authentic ordinary people, natural expressions, cinematic depth, main subject on left, clean empty space on right for editable Hindi headline"
-  },
-  {
-    id: "data",
-    name: "Data Analysis",
-    description: "आँकड़ों और विश्लेषण वाला प्रोफेशनल अंदाज",
-    prompt: "premium Indian news analysis visual background, subtle abstract charts and data visualization elements, deep blue and yellow cinematic palette, sophisticated editorial photography, central clean space for editable headline"
-  },
-  {
-    id: "human",
-    name: "Human Story",
-    description: "इंसानी कहानी और भावनात्मक अंदाज",
-    prompt: "authentic Indian human interest documentary photography, ordinary Indian people, realistic emotional expressions, natural environment, cinematic lighting, powerful storytelling composition, clean empty space for editable headline"
-  },
-  {
-    id: "minimal",
-    name: "Minimal Editorial",
-    description: "साफ-सुथरा प्रीमियम Editorial Design",
-    prompt: "premium minimalist Indian current affairs editorial thumbnail background, sophisticated black white and yellow palette, subtle cinematic texture, elegant visual hierarchy, strong negative space for editable Hindi typography"
-  }
-];
-
-async function generateSingleThumbnail(env, topic, style) {
-  const prompt = `
-Create a professional landscape 16:9 YouTube thumbnail background for an Indian Hindi current affairs channel named Apna Nazariya.
-
-VIDEO TOPIC:
-${topic}
-
-VISUAL STYLE:
-${style.prompt}
-
-STRICT REQUIREMENTS:
-- Landscape 16:9 composition.
-- High contrast and mobile readability.
-- Leave clean empty space for editable text.
-- Do not generate words, letters, numbers or typography.
-- No logos or watermarks.
-- No fabricated newspaper headlines, documents, charts or evidence.
-- Realistic documentary-style visuals.
-- Avoid misleading political or news imagery.
-`;
-
-  // FLUX request: prompt and steps only.
-  // Final 1280x720 layout is created in the browser Canvas.
-  const output = await env.AI.run(IMAGE_MODEL, {
-    prompt: prompt.slice(0, 2048),
-    steps: 4
-  });
-
-  const image = output?.image;
-  if (!image) throw new Error("Image model returned no image");
-
-  return {
-    id: style.id,
-    name: style.name,
-    description: style.description,
-    image: `data:image/jpeg;base64,${image}`,
-    prompt,
-    editable: {
-      headline: "",
-      subline: "",
-      headlineColor: "#ffffff",
-      accentColor: "#ffcc00",
-      backgroundColor: "#111827",
-      fontSize: 64,
-      sublineSize: 30,
-      headlinePosition: "left",
-      textAlign: "left",
-      outline: true,
-      shadow: true
-    },
-    dimensions: { width: 1280, height: 720 }
-  };
-}
-
-async function generateThumbnails(env, body) {
-  if (!env.AI) {
-    return json({ ok: false, error: "Cloudflare AI binding missing" }, 500);
-  }
-
-  const topic = String(body.topic || "").trim();
-  const headline = String(body.headline || "").trim();
-  const subline = String(body.subline || "").trim();
-
-  if (
-    !topic ||
-    topic.length > MAX_THUMBNAIL_TOPIC ||
-    headline.length > 100 ||
-    subline.length > 150
-  ) {
-    return json({
-      ok: false,
-      error: "Topic or headline is missing or too long"
-    }, 400);
-  }
-
-  const results = [];
-
-  for (const style of THUMBNAIL_STYLES) {
-    try {
-      const thumbnail = await generateSingleThumbnail(env, topic, style);
-      thumbnail.editable.headline = headline;
-      thumbnail.editable.subline = subline;
-      results.push(thumbnail);
-    } catch (error) {
-      results.push({
-        id: style.id,
-        name: style.name,
-        description: style.description,
-        error: String(error.message || error).slice(0, 500),
-        prompt: style.prompt
-      });
-    }
-  }
-
-  const successful = results.filter(x => x.image);
-
-  return json({
-    ok: successful.length > 0,
-    total: results.length,
-    successful: successful.length,
-    thumbnails: results,
-    message: successful.length
-      ? `${successful.length} thumbnail backgrounds generated`
-      : "Thumbnail generation failed. Check Workers AI availability and usage limits."
-  });
-}
-
-// AGENT PROMPT BUILDER
-
-function buildAgentPrompt(agent, input, previousOutputs) {
-  const history = previousOutputs
-    .map(item => `
-AGENT: ${item.agent_name}
-OUTPUT:
-${String(item.output_text || "").slice(0, 2200)}
-`)
-    .join("\n")
-    .slice(-MAX_OUTPUT_CONTEXT);
-
-  return `
-PROJECT: APNA NAZARIYA
-
-TOPIC:
-${input.topic || ""}
-
-ADDITIONAL CONTEXT:
-${input.extra || "कोई अतिरिक्त जानकारी नहीं।"}
-
-CREATOR VOICE:
-${input.voice || "सरल बोलचाल वाली हिंदी, हल्का UP/desi touch।"}
-
-REFERENCE CHANNELS:
-${(input.channels || []).join("\n") || "कोई URL नहीं दिया गया।"}
-
-PREVIOUS AGENT OUTPUTS:
-${history || "यह पहला specialist step है।"}
-
-CURRENT AGENT:
-${agent}
-
-CURRENT AGENT INSTRUCTIONS:
-${AGENTS[agent] || "काम का स्पष्ट और उपयोगी जवाब दो।"}
-
-ध्यान रहे:
-- पुराने outputs को बिना जाँच सही मत मानो।
-- गलत या unsupported claim को आगे मत बढ़ाओ।
-- जरूरी कमी हो तो स्पष्ट लिखो।
-- पूरा जवाब हिंदी में और human review के लिए तैयार रखो।
-`;
-}
-
-// AGENT SELECTION
-
-function chooseAgents(topic, extra) {
-  const text = `${topic} ${extra}`.toLowerCase();
-  const selected = ["AI Manager"];
-  const add = name => {
-    if (!selected.includes(name)) selected.push(name);
-  };
-
-  if (/trend|trending|viral|आज|ताजा|ताज़ा|current|news|खबर|मुद्दा|विषय/i.test(text)) add("Trend Hunter");
-  if (/competitor|competitors|reference channel|दूसरे चैनल|प्रतिस्पर्धी|youtube channel/i.test(text)) add("Competitor Intelligence");
-  if (/fact|verify|research|रिसर्च|स्रोत|आंक|आँक|सरकार|राजनीति|चुनाव|बेरोजगार|रोजगार|कानून|दावा|डेटा|data/i.test(text)) add("Research & Fact Check");
-
-  if (/script|स्क्रिप्ट|वीडियो|video|discussion|चर्चा|बातचीत|long form/i.test(text)) {
-    add("Human Scriptwriter");
-    add("Hook & Retention");
-    add("Title Specialist");
-    add("Thumbnail Designer");
-    add("SEO Specialist");
-  }
-
-  if (/shorts|short video|रील|reel/i.test(text)) add("Shorts Producer");
-  if (/live|लाइव|stream|स्ट्रीम/i.test(text)) add("Live Producer");
-  if (/analytics|analysis|ctr|retention|views|youtube studio|एनालिटिक्स/i.test(text)) add("Analytics Specialist");
-  if (/growth|strategy|channel grow|ग्रोथ|विकास|योजना/i.test(text)) add("Growth Strategist");
-
-  if (selected.length === 1) {
-    add("Research & Fact Check");
-    add("Human Scriptwriter");
-    add("Hook & Retention");
-    add("Title Specialist");
-    add("Thumbnail Designer");
-    add("SEO Specialist");
-  }
-
-  return selected;
-}
-
-// PROFILE
-
-async function saveProfile(env, body) {
-  const voice = String(body.voice || "").slice(0, 5000);
-
-  await env.DB.prepare(`
-    INSERT OR REPLACE INTO settings (key, value)
-    VALUES ('voice', ?)
-  `).bind(voice).run();
-
-  if (Array.isArray(body.channels)) {
-    const channels = [...new Set(
-      body.channels
-        .map(x => String(x || "").trim())
-        .filter(x => /^https:\/\/(www\.)?(youtube\.com|youtu\.be)\//i.test(x))
-        .map(x => x.slice(0, 500))
-    )].slice(0, 50);
-
-    const statements = [];
-
-    if (body.replaceChannels === true) {
-      statements.push(env.DB.prepare("DELETE FROM channels"));
-    }
-
-    for (const link of channels) {
-      statements.push(env.DB.prepare(`
-        INSERT INTO channels (url)
-        SELECT ?
-        WHERE NOT EXISTS (SELECT 1 FROM channels WHERE url = ?)
-      `).bind(link, link));
-    }
-
-    if (statements.length) await env.DB.batch(statements);
-  }
+  return String(output).trim();
 }
 
 async function getProfile(env) {
-  const voice = await env.DB.prepare(`
-    SELECT value FROM settings WHERE key = 'voice'
-  `).first();
+  const rows = await env.DB.prepare(
+    "SELECT key, value FROM settings"
+  ).all();
 
-  const channels = await env.DB.prepare(`
-    SELECT id, url FROM channels ORDER BY id
-  `).all();
+  const profile = {};
+  for (const row of rows.results || []) {
+    profile[row.key] = row.value;
+  }
+
+  const channels = await env.DB.prepare(
+    "SELECT url FROM channels"
+  ).all();
+
+  profile.referenceChannels = (channels.results || []).map(x => x.url);
+  return profile;
+}
+
+async function saveProfile(env, body) {
+  const allowed = [
+    "creatorVoice",
+    "hostOne",
+    "hostTwo",
+    "channelName",
+    "tagline",
+    "language",
+    "extraRules"
+  ];
+
+  for (const key of allowed) {
+    if (body[key] !== undefined) {
+      await env.DB.prepare(
+        "INSERT OR REPLACE INTO settings (key,value) VALUES (?,?)"
+      ).bind(key, String(body[key])).run();
+    }
+  }
+
+  if (Array.isArray(body.referenceChannels)) {
+    await env.DB.prepare("DELETE FROM channels").run();
+
+    for (const url of body.referenceChannels.slice(0, 20)) {
+      if (typeof url === "string" && url.trim()) {
+        await env.DB.prepare(
+          "INSERT INTO channels (id,url) VALUES (?,?)"
+        ).bind(uuid(), url.trim().slice(0, 500)).run();
+      }
+    }
+  }
+
+  return await getProfile(env);
+}
+
+function chooseAgents(topic, requested) {
+  if (Array.isArray(requested) && requested.length) {
+    return requested.filter(name => AGENTS[name]);
+  }
+  return DEFAULT_SEQUENCE;
+}
+
+function buildAgentPrompt(agentName, input, previousOutputs, profile) {
+  const agent = AGENTS[agentName];
+
+  const previous = previousOutputs
+    .slice(-5)
+    .map(x => `\n\n### ${x.agent_name}\n${x.content}`)
+    .join("\n");
+
+  return `
+PROJECT TOPIC:
+${input.topic || "विषय उपलब्ध नहीं"}
+
+VIDEO FORMAT:
+${input.format || "Long video"}
+
+TARGET DURATION:
+${input.duration || "8-10 मिनट"}
+
+EXTRA INSTRUCTIONS:
+${input.instructions || "कोई अतिरिक्त निर्देश नहीं"}
+
+CREATOR PROFILE:
+${JSON.stringify(profile || {})}
+
+REFERENCE CHANNELS:
+${(profile?.referenceChannels || []).join("\n")}
+
+PREVIOUS WORK:
+${previous || "यह पहला चरण है।"}
+
+CURRENT AGENT:
+${agentName}
+
+AGENT ROLE:
+${agent.role}
+
+TASK:
+${agent.task}
+
+पूरी जानकारी और output उपयोगी headings के साथ दो।
+${BASE_RULES}
+`;
+}
+
+async function createProject(env, input, agents) {
+  const projectId = uuid();
+  const jobId = uuid();
+  const timestamp = now();
+
+  await env.DB.prepare(
+    `INSERT INTO projects
+    (id,topic,status,created_at,updated_at,input_json)
+    VALUES (?,?,?,?,?,?)`
+  ).bind(
+    projectId,
+    String(input.topic || "Untitled Project").slice(0, 500),
+    "running",
+    timestamp,
+    timestamp,
+    JSON.stringify(input)
+  ).run();
+
+  await env.DB.prepare(
+    `INSERT INTO workflow_jobs
+    (id,project_id,status,current_step,total_steps,error,created_at,updated_at)
+    VALUES (?,?,?,?,?,?,?,?)`
+  ).bind(
+    jobId,
+    projectId,
+    "queued",
+    0,
+    agents.length,
+    null,
+    timestamp,
+    timestamp
+  ).run();
+
+  for (const name of agents) {
+    await env.DB.prepare(
+      `INSERT INTO agent_runs
+      (id,job_id,project_id,agent_name,status,output,error,created_at,updated_at)
+      VALUES (?,?,?,?,?,?,?,?,?)`
+    ).bind(
+      uuid(),
+      jobId,
+      projectId,
+      name,
+      "queued",
+      null,
+      null,
+      timestamp,
+      timestamp
+    ).run();
+  }
+
+  return { projectId, jobId };
+}
+
+async function workflowStatus(env, jobId) {
+  const job = await env.DB.prepare(
+    "SELECT * FROM workflow_jobs WHERE id = ?"
+  ).bind(jobId).first();
+
+  if (!job) return null;
+
+  const runs = await env.DB.prepare(
+    "SELECT * FROM agent_runs WHERE job_id = ? ORDER BY created_at ASC"
+  ).bind(jobId).all();
+
+  return { job, agents: runs.results || [] };
+}
+
+async function runNextStep(env, jobId) {
+  const job = await env.DB.prepare(
+    "SELECT * FROM workflow_jobs WHERE id = ?"
+  ).bind(jobId).first();
+
+  if (!job) throw new Error("Workflow नहीं मिला।");
+  if (job.status === "completed") return { completed: true };
+
+  const next = await env.DB.prepare(
+    `SELECT * FROM agent_runs
+     WHERE job_id = ? AND status = 'queued'
+     ORDER BY created_at ASC LIMIT 1`
+  ).bind(jobId).first();
+
+  if (!next) {
+    await env.DB.prepare(
+      "UPDATE workflow_jobs SET status='completed',updated_at=? WHERE id=?"
+    ).bind(now(), jobId).run();
+
+    await env.DB.prepare(
+      "UPDATE projects SET status='completed',updated_at=? WHERE id=?"
+    ).bind(now(), job.project_id).run();
+
+    return { completed: true };
+  }
+
+  await env.DB.prepare(
+    "UPDATE workflow_jobs SET status='running',updated_at=? WHERE id=?"
+  ).bind(now(), jobId).run();
+
+  await env.DB.prepare(
+    "UPDATE agent_runs SET status='running',updated_at=? WHERE id=?"
+  ).bind(now(), next.id).run();
+
+  try {
+    const project = await env.DB.prepare(
+      "SELECT * FROM projects WHERE id=?"
+    ).bind(job.project_id).first();
+
+    const input = JSON.parse(project.input_json || "{}");
+
+    const previous = await env.DB.prepare(
+      "SELECT agent_name,content FROM project_outputs WHERE project_id=? ORDER BY created_at ASC"
+    ).bind(job.project_id).all();
+
+    const profile = await getProfile(env);
+    const prompt = buildAgentPrompt(
+      next.agent_name,
+      input,
+      previous.results || [],
+      profile
+    );
+
+    const output = await runModel(
+      env,
+      BASE_RULES,
+      prompt.slice(0, MAX_PROMPT_LENGTH),
+      2400
+    );
+
+    const timestamp = now();
+
+    await env.DB.prepare(
+      "UPDATE agent_runs SET status='completed',output=?,updated_at=? WHERE id=?"
+    ).bind(output, timestamp, next.id).run();
+
+    await env.DB.prepare(
+      `INSERT INTO project_outputs (id,project_id,agent_name,content,created_at)
+       VALUES (?,?,?,?,?)`
+    ).bind(
+      uuid(),
+      job.project_id,
+      next.agent_name,
+      output,
+      timestamp
+    ).run();
+
+    const completedCount = await env.DB.prepare(
+      "SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status='completed'"
+    ).bind(jobId).first();
+
+    await env.DB.prepare(
+      "UPDATE workflow_jobs SET current_step=?,updated_at=? WHERE id=?"
+    ).bind(completedCount.total, timestamp, jobId).run();
+
+    return { completed: false, agent: next.agent_name, output };
+  } catch (error) {
+    const message = String(error?.message || error);
+
+    await env.DB.prepare(
+      "UPDATE agent_runs SET status='error',error=?,updated_at=? WHERE id=?"
+    ).bind(message, now(), next.id).run();
+
+    await env.DB.prepare(
+      "UPDATE workflow_jobs SET status='paused',error=?,updated_at=? WHERE id=?"
+    ).bind(message, now(), jobId).run();
+
+    await env.DB.prepare(
+      "UPDATE projects SET status='paused',updated_at=? WHERE id=?"
+    ).bind(now(), job.project_id).run();
+
+    throw error;
+  }
+}
+
+async function generateThumbnail(env, body) {
+  if (!env.AI) throw new Error("AI binding उपलब्ध नहीं है।");
+
+  const topic = String(body.topic || "").slice(0, 500);
+  const headline = String(body.headline || topic).slice(0, 150);
+  const subline = String(body.subline || "").slice(0, 150);
+
+  const styles = [
+    "cinematic documentary news photography, dramatic lighting",
+    "realistic editorial photojournalism, strong visual storytelling",
+    "minimal modern news documentary background, high contrast",
+    "cinematic realistic public issue documentary scene",
+    "dramatic split composition, realistic photography"
+  ];
+
+  const thumbnails = [];
+
+  for (let i = 0; i < styles.length; i++) {
+    const prompt = `
+Create a professional YouTube thumbnail background image.
+Topic: ${topic}
+Visual direction: ${styles[i]}.
+16:9 horizontal composition.
+Photorealistic, high quality.
+No words, no letters, no typography, no logo, no watermark.
+Keep clear negative space for Hindi headline overlay.
+Do not depict fabricated evidence or fake news screenshots.
+`;
+
+    try {
+      const result = await env.AI.run(IMAGE_MODEL, {
+        prompt,
+        width: 1280,
+        height: 720
+      });
+
+      let imageData = result?.image || result?.data?.image || result;
+
+      if (imageData instanceof Uint8Array) {
+        imageData = btoa(
+          Array.from(imageData, b => String.fromCharCode(b)).join("")
+        );
+      }
+
+      if (typeof imageData === "string") {
+        thumbnails.push({
+          id: uuid(),
+          name: `Concept ${i + 1}`,
+          image: imageData.startsWith("data:")
+            ? imageData
+            : `data:image/jpeg;base64,${imageData}`,
+          headline,
+          subline
+        });
+      }
+    } catch (error) {
+      thumbnails.push({
+        id: uuid(),
+        name: `Concept ${i + 1}`,
+        error: String(error?.message || error)
+      });
+    }
+  }
 
   return {
     ok: true,
-    voice: voice?.value || "",
-    channels: channels.results || []
+    total: thumbnails.length,
+    successful: thumbnails.filter(x => x.image).length,
+    thumbnails
   };
 }
 
-// WORKFLOW START
+async function handleApi(request, env) {
+  const url = new URL(request.url);
+  const path = url.pathname;
+  const method = request.method;
 
-async function startWorkflow(env, body) {
-  const topic = String(body.topic || "").trim();
-  const extra = String(body.extra || "").trim();
-
-  if (!topic || topic.length > 5000 || extra.length > 5000) {
+  if (path === "/api/health" && method === "GET") {
     return json({
-      ok: false,
-      error: "Valid topic is required. Maximum length is 5000 characters."
-    }, 400);
+      ok: true,
+      service: "Apna Nazariya AI API",
+      version: "4.0"
+    });
   }
 
-  const profile = await getProfile(env);
-
-  const input = {
-    topic,
-    extra,
-    voice: String(body.voice || profile.voice || "").slice(0, 5000),
-    channels: Array.isArray(body.channels)
-      ? body.channels.slice(0, 50)
-      : (profile.channels || []).map(x => x.url)
-  };
-
-  const agentList = chooseAgents(topic, extra);
-  const projectId = makeId();
-  const jobId = makeId();
-
-  const statements = [
-    env.DB.prepare(`
-      INSERT INTO projects (id, title, topic, status)
-      VALUES (?, ?, ?, 'active')
-    `).bind(projectId, topic.slice(0, 180), topic),
-
-    env.DB.prepare(`
-      INSERT INTO workflow_jobs (id, project_id, status, current_step, input_json)
-      VALUES (?, ?, 'queued', ?, ?)
-    `).bind(jobId, projectId, agentList[0], JSON.stringify(input))
-  ];
-
-  agentList.forEach((agent, index) => {
-    statements.push(env.DB.prepare(`
-      INSERT INTO agent_runs (id, job_id, agent_name, status, input_text)
-      VALUES (?, ?, ?, 'queued', ?)
-    `).bind(
-      `${jobId}_${String(index).padStart(3, "0")}`,
-      jobId,
-      agent,
-      JSON.stringify(input)
-    ));
-  });
-
-  await env.DB.batch(statements);
-
-  return json({
-    ok: true,
-    projectId,
-    jobId,
-    agents: agentList,
-    totalSteps: agentList.length,
-    status: "queued"
-  });
-}
-
-// WORKFLOW STATUS
-
-async function getWorkflowStatus(env, jobId) {
-  const job = await env.DB.prepare(`
-    SELECT * FROM workflow_jobs WHERE id = ?
-  `).bind(jobId).first();
-
-  if (!job) return json({ ok: false, error: "Workflow not found" }, 404);
-
-  await env.DB.prepare(`
-    UPDATE agent_runs
-    SET status = 'queued',
-        error_message = 'Previous execution interrupted; ready to retry'
-    WHERE job_id = ?
-      AND status = 'running'
-      AND started_at < datetime('now', '-10 minutes')
-  `).bind(jobId).run();
-
-  await env.DB.prepare(`
-    UPDATE workflow_jobs
-    SET status = 'paused', updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-      AND status = 'running'
-      AND NOT EXISTS (
-        SELECT 1 FROM agent_runs WHERE job_id = ? AND status = 'running'
-      )
-      AND EXISTS (
-        SELECT 1 FROM agent_runs WHERE job_id = ? AND status = 'queued'
-      )
-  `).bind(jobId, jobId, jobId).run();
-
-  const updatedJob = await env.DB.prepare(`
-    SELECT * FROM workflow_jobs WHERE id = ?
-  `).bind(jobId).first();
-
-  const steps = await env.DB.prepare(`
-    SELECT id, agent_name, status, error_message,
-           attempt_count, started_at, completed_at
-    FROM agent_runs WHERE job_id = ? ORDER BY id
-  `).bind(jobId).all();
-
-  return json({
-    ok: true,
-    job: updatedJob,
-    steps: steps.results || []
-  });
-}
-
-// EXECUTE WORKFLOW STEP
-
-async function executeWorkflowStep(env, jobId) {
-  const job = await env.DB.prepare(`
-    SELECT * FROM workflow_jobs WHERE id = ?
-  `).bind(jobId).first();
-
-  if (!job) return json({ ok: false, error: "Workflow not found" }, 404);
-
-  if (job.status === "completed") {
-    return json({ ok: true, done: true, status: "completed" });
-  }
-
-  if (job.status === "paused") {
+  if (path === "/api/secret-check" && method === "GET") {
     return json({
-      ok: false,
-      paused: true,
-      error: "Workflow is paused. Resume it first."
-    }, 409);
+      ok: true,
+      appLoginIdConfigured: Boolean(env.APP_LOGIN_ID),
+      appLoginPasswordConfigured: Boolean(env.APP_LOGIN_PASSWORD),
+      databaseConfigured: Boolean(env.DB),
+      aiConfigured: Boolean(env.AI)
+    });
   }
 
-  const running = await env.DB.prepare(`
-    SELECT id FROM agent_runs
-    WHERE job_id = ? AND status = 'running'
-    LIMIT 1
-  `).bind(jobId).first();
+  if (path === "/api/login" && method === "POST") {
+    const body = await readBody(request);
 
-  if (running) {
-    return json({
-      ok: false,
-      error: "An Agent is already running. Do not start another step."
-    }, 409);
-  }
-
-  const next = await env.DB.prepare(`
-    SELECT * FROM agent_runs
-    WHERE job_id = ? AND status = 'queued'
-    ORDER BY id LIMIT 1
-  `).bind(jobId).first();
-
-  if (!next) {
-    await env.DB.prepare(`
-      UPDATE workflow_jobs
-      SET status = 'completed', current_step = NULL,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).bind(jobId).run();
-
-    await env.DB.prepare(`
-      UPDATE projects SET status = 'completed',
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).bind(job.project_id).run();
-
-    return json({ ok: true, done: true, status: "completed" });
-  }
-
-  const lock = await env.DB.prepare(`
-    UPDATE agent_runs
-    SET status = 'running',
-        started_at = CURRENT_TIMESTAMP,
-        attempt_count = attempt_count + 1,
-        error_message = NULL
-    WHERE id = ? AND status = 'queued'
-  `).bind(next.id).run();
-
-  if (!lock.meta || lock.meta.changes !== 1) {
-    return json({
-      ok: false,
-      error: "Agent was claimed by another request. Refresh status."
-    }, 409);
-  }
-
-  await env.DB.prepare(`
-    UPDATE workflow_jobs
-    SET status = 'running', current_step = ?,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(next.agent_name, jobId).run();
-
-  const input = JSON.parse(job.input_json || "{}");
-
-  const previous = await env.DB.prepare(`
-    SELECT agent_name, output_text
-    FROM agent_runs
-    WHERE job_id = ? AND status = 'completed'
-    ORDER BY id
-  `).bind(jobId).all();
-
-  try {
-    const prompt = buildAgentPrompt(next.agent_name, input, previous.results || []);
-
-    const systemPrompt = `
-${BASE_RULES}
-
-CURRENT SPECIALIST:
-${next.agent_name}
-
-SPECIALIST INSTRUCTIONS:
-${AGENTS[next.agent_name] || "काम का स्पष्ट और उपयोगी जवाब दो।"}
-
-तुम्हें केवल वर्तमान Agent का काम करना है।
-`;
-
-    const answer = await runModel(env, systemPrompt, prompt);
-
-    await env.DB.batch([
-      env.DB.prepare(`
-        UPDATE agent_runs
-        SET status = 'completed', output_text = ?,
-            completed_at = CURRENT_TIMESTAMP, error_message = NULL
-        WHERE id = ?
-      `).bind(answer, next.id),
-
-      env.DB.prepare(`
-        INSERT INTO project_outputs
-        (id, project_id, job_id, output_type, title, content)
-        VALUES (?, ?, ?, ?, ?, ?)
-      `).bind(makeId(), job.project_id, jobId, "agent_output", next.agent_name, answer)
-    ]);
-
-    const remaining = await env.DB.prepare(`
-      SELECT COUNT(*) AS total
-      FROM agent_runs
-      WHERE job_id = ? AND status != 'completed'
-    `).bind(jobId).first();
-
-    if (Number(remaining?.total || 0) === 0) {
-      await env.DB.prepare(`
-        UPDATE workflow_jobs
-        SET status = 'completed', current_step = NULL,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).bind(jobId).run();
-
-      await env.DB.prepare(`
-        UPDATE projects SET status = 'completed',
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).bind(job.project_id).run();
-
-      return json({
-        ok: true,
-        done: true,
-        status: "completed",
-        agent: next.agent_name,
-        answer
-      });
+    if (
+      !env.APP_LOGIN_ID ||
+      !env.APP_LOGIN_PASSWORD ||
+      !safeEqual(String(body.loginId || ""), env.APP_LOGIN_ID) ||
+      !safeEqual(String(body.password || ""), env.APP_LOGIN_PASSWORD)
+    ) {
+      return json({ ok: false, error: "गलत Login ID या Password।" }, 401);
     }
 
-    await env.DB.prepare(`
-      UPDATE workflow_jobs
-      SET status = 'queued', current_step = NULL,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).bind(jobId).run();
+    const token = randomToken();
+    const tokenHash = await sha256(token);
+    const expires = new Date(
+      Date.now() + SESSION_DAYS * 86400000
+    ).toISOString();
+
+    await env.DB.prepare(
+      "INSERT INTO login_sessions (token_hash,expires_at) VALUES (?,?)"
+    ).bind(tokenHash, expires).run();
+
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: {
+        ...corsHeaders,
+        "Set-Cookie": cookieHeader(token)
+      }
+    });
+  }
+
+  if (path === "/api/logout" && method === "POST") {
+    const token = cookieValue(request, "an_session");
+
+    if (token) {
+      await env.DB.prepare(
+        "DELETE FROM login_sessions WHERE token_hash=?"
+      ).bind(await sha256(token)).run();
+    }
+
+    return new Response(JSON.stringify({ ok: true }), {
+      headers: {
+        ...corsHeaders,
+        "Set-Cookie": clearCookie()
+      }
+    });
+  }
+
+  if (path === "/api/me" && method === "GET") {
+    const loggedIn = await authenticate(request, env);
+    return json({ ok: true, loggedIn });
+  }
+
+  if (!(await requireAuth(request, env))) {
+    return json({ ok: false, error: "Unauthorized" }, 401);
+  }
+
+  if (path === "/api/profile" && method === "GET") {
+    return json({ ok: true, profile: await getProfile(env) });
+  }
+
+  if (path === "/api/profile" && method === "POST") {
+    const body = await readBody(request);
+    const profile = await saveProfile(env, body);
+    return json({ ok: true, profile });
+  }
+
+  if (path === "/api/ai" && method === "POST") {
+    const body = await readBody(request);
+    const prompt = String(body.prompt || "").slice(0, MAX_PROMPT_LENGTH);
+
+    if (!prompt.trim()) {
+      return json({ ok: false, error: "Prompt खाली है।" }, 400);
+    }
+
+    const output = await runModel(env, BASE_RULES, prompt, 2400);
+    return json({ ok: true, output });
+  }
+
+  if (path === "/api/thumbnails/generate" && method === "POST") {
+    const body = await readBody(request);
+    const result = await generateThumbnail(env, body);
+    return json(result);
+  }
+
+  if (path === "/api/workflow/start" && method === "POST") {
+    const body = await readBody(request);
+
+    if (!String(body.topic || "").trim()) {
+      return json({ ok: false, error: "पहले video topic लिखें।" }, 400);
+    }
+
+    const agents = chooseAgents(body.topic, body.agents);
+    if (!agents.length) {
+      return json({ ok: false, error: "कोई valid agent चुना नहीं गया।" }, 400);
+    }
+
+    const created = await createProject(env, body, agents);
 
     return json({
       ok: true,
-      done: false,
-      status: "queued",
-      agent: next.agent_name,
-      answer
+      projectId: created.projectId,
+      jobId: created.jobId,
+      totalSteps: agents.length,
+      status: "queued"
     });
-
-  } catch (error) {
-    await env.DB.batch([
-      env.DB.prepare(`
-        UPDATE agent_runs SET status = 'queued', error_message = ?
-        WHERE id = ?
-      `).bind(String(error.message || error).slice(0, 1000), next.id),
-
-      env.DB.prepare(`
-        UPDATE workflow_jobs
-        SET status = 'paused', current_step = ?, error_message = ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).bind(
-        next.agent_name,
-        String(error.message || error).slice(0, 1000),
-        jobId
-      )
-    ]);
-
-    return json({
-      ok: false,
-      paused: true,
-      agent: next.agent_name,
-      error: String(error.message || error).slice(0, 1000)
-    }, 502);
-  }
-}
-
-// RESUME WORKFLOW
-
-async function resumeWorkflow(env, jobId) {
-  const job = await env.DB.prepare(`
-    SELECT * FROM workflow_jobs WHERE id = ?
-  `).bind(jobId).first();
-
-  if (!job) return json({ ok: false, error: "Workflow not found" }, 404);
-
-  const running = await env.DB.prepare(`
-    SELECT id FROM agent_runs
-    WHERE job_id = ? AND status = 'running'
-    LIMIT 1
-  `).bind(jobId).first();
-
-  if (running) {
-    return json({
-      ok: false,
-      error: "An Agent is still running. Check status first."
-    }, 409);
   }
 
-  await env.DB.prepare(`
-    UPDATE workflow_jobs
-    SET status = 'queued', error_message = NULL,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).bind(jobId).run();
+  if (path === "/api/workflow/step" && method === "POST") {
+    const body = await readBody(request);
 
-  return json({ ok: true, status: "queued" });
+    if (!body.jobId) {
+      return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+    }
+
+    const result = await runNextStep(env, body.jobId);
+    return json({ ok: true, ...result });
+  }
+
+  if (path === "/api/workflow/resume" && method === "POST") {
+    const body = await readBody(request);
+
+    await env.DB.prepare(
+      "UPDATE agent_runs SET status='queued',error=NULL WHERE job_id=? AND status='error'"
+    ).bind(body.jobId).run();
+
+    await env.DB.prepare(
+      "UPDATE workflow_jobs SET status='queued',error=NULL,updated_at=? WHERE id=?"
+    ).bind(now(), body.jobId).run();
+
+    return json({ ok: true });
+  }
+
+  if (path === "/api/workflow/status" && method === "GET") {
+    const jobId = url.searchParams.get("jobId");
+    if (!jobId) return json({ ok: false, error: "jobId जरूरी है।" }, 400);
+
+    const status = await workflowStatus(env, jobId);
+    if (!status) return json({ ok: false, error: "Workflow नहीं मिला।" }, 404);
+
+    return json({ ok: true, ...status });
+  }
+
+  if (path === "/api/projects" && method === "GET") {
+    const result = await env.DB.prepare(
+      "SELECT * FROM projects ORDER BY created_at DESC LIMIT 100"
+    ).all();
+
+    return json({ ok: true, projects: result.results || [] });
+  }
+
+  const projectMatch = path.match(/^\/api\/projects\/([^/]+)$/);
+
+  if (projectMatch && method === "GET") {
+    const projectId = projectMatch[1];
+
+    const project = await env.DB.prepare(
+      "SELECT * FROM projects WHERE id=?"
+    ).bind(projectId).first();
+
+    if (!project) return json({ ok: false, error: "Project नहीं मिला।" }, 404);
+
+    const outputs = await env.DB.prepare(
+      "SELECT * FROM project_outputs WHERE project_id=? ORDER BY created_at ASC"
+    ).bind(projectId).all();
+
+    const jobs = await env.DB.prepare(
+      "SELECT * FROM workflow_jobs WHERE project_id=? ORDER BY created_at DESC"
+    ).bind(projectId).all();
+
+    return json({
+      ok: true,
+      project,
+      outputs: outputs.results || [],
+      jobs: jobs.results || []
+    });
+  }
+
+  return json({ ok: false, error: "API route नहीं मिला।" }, 404);
 }
-
-// PROJECTS
-
-async function listProjects(env) {
-  const result = await env.DB.prepare(`
-    SELECT p.id, p.title, p.topic, p.status,
-      p.created_at, p.updated_at,
-      (SELECT COUNT(*) FROM workflow_jobs w WHERE w.project_id = p.id) AS workflow_count
-    FROM projects p
-    ORDER BY p.updated_at DESC
-    LIMIT 100
-  `).all();
-
-  return json({ ok: true, projects: result.results || [] });
-}
-
-async function getProject(env, projectId) {
-  const project = await env.DB.prepare(`
-    SELECT * FROM projects WHERE id = ?
-  `).bind(projectId).first();
-
-  if (!project) return json({ ok: false, error: "Project not found" }, 404);
-
-  const jobs = await env.DB.prepare(`
-    SELECT * FROM workflow_jobs
-    WHERE project_id = ? ORDER BY created_at DESC
-  `).bind(projectId).all();
-
-  const outputs = await env.DB.prepare(`
-    SELECT id, job_id, output_type, title, content, created_at
-    FROM project_outputs
-    WHERE project_id = ?
-    ORDER BY created_at, rowid
-  `).bind(projectId).all();
-
-  return json({
-    ok: true,
-    project,
-    jobs: jobs.results || [],
-    outputs: outputs.results || []
-  });
-}
-
-// MAIN WORKER
 
 export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-    const path = url.pathname;
-    const method = request.method;
-
-    if (path === "/api/health" && method === "GET") {
-      return json({
-        ok: true,
-        service: "Apna Nazariya AI API",
-        version: "3.1",
-        thumbnailGenerator: true,
-        editableThumbnailData: true
-      });
-    }
-
-    if (!path.startsWith("/api/")) {
-      return env.ASSETS.fetch(request);
-    }
-
-    if (method === "OPTIONS") {
-      return new Response(null, {
-        status: 204,
-        headers: { "Cache-Control": "no-store" }
-      });
-    }
-
-    if (!sameOrigin(request, url)) {
-      return json({ ok: false, error: "Invalid request origin" }, 403);
-    }
-
-    if (path === "/api/secret-check" && method === "GET") {
-      return json({
-        ok: true,
-        appLoginIdConfigured: Boolean(env.APP_LOGIN_ID),
-        appLoginPasswordConfigured: Boolean(env.APP_LOGIN_PASSWORD),
-        databaseConfigured: Boolean(env.DB),
-        aiConfigured: Boolean(env.AI)
-      });
-    }
-
-    if (!env.DB) {
-      return json({ ok: false, error: "D1 database binding missing" }, 500);
-    }
-
-    // LOGIN
-    if (path === "/api/login" && method === "POST") {
-      if (!env.APP_LOGIN_ID || !env.APP_LOGIN_PASSWORD) {
-        return json({ ok: false, error: "Login secrets are not configured" }, 500);
+  async fetch(request, env, ctx) {
+    try {
+      if (request.method === "OPTIONS") {
+        return new Response(null, { headers: corsHeaders });
       }
 
-      const body = await readBody(request);
-      if (!body) return json({ ok: false, error: "Invalid JSON" }, 400);
+      await ensureSchema(env);
 
-      const loginId = String(body.loginId || "");
-      const password = String(body.password || "");
+      const url = new URL(request.url);
 
-      if (
-        loginId.length > 100 ||
-        password.length > 200 ||
-        !safeEqual(loginId, env.APP_LOGIN_ID) ||
-        !safeEqual(password, env.APP_LOGIN_PASSWORD)
-      ) {
-        return json({ ok: false, error: "Login ID या Password गलत है" }, 401);
+      if (url.pathname.startsWith("/api/")) {
+        return await handleApi(request, env);
       }
 
-      const token = randomToken();
-      const tokenHash = await sha256(token);
-      const sessionId = makeId();
-      const expiresAt = new Date(Date.now() + SESSION_DAYS * 24 * 60 * 60 * 1000).toISOString();
-
-      await env.DB.prepare(`
-        INSERT INTO login_sessions (id, token_hash, expires_at)
-        VALUES (?, ?, ?)
-      `).bind(sessionId, tokenHash, expiresAt).run();
-
-      await env.DB.prepare(`
-        DELETE FROM login_sessions WHERE expires_at < CURRENT_TIMESTAMP
-      `).run();
-
-      return json({
-        ok: true,
-        message: "Login successful",
-        expiresAt
-      }, 200, {
-        "Set-Cookie": makeCookie(token, SESSION_DAYS * 24 * 60 * 60)
-      });
-    }
-
-    // LOGOUT
-    if (path === "/api/logout" && method === "POST") {
-      const token = getCookie(request, "an_session");
-      if (token) {
-        const tokenHash = await sha256(token);
-        await env.DB.prepare(`
-          DELETE FROM login_sessions WHERE token_hash = ?
-        `).bind(tokenHash).run();
+      if (env.ASSETS) {
+        return await env.ASSETS.fetch(request);
       }
-      return json({ ok: true, message: "Logged out" }, 200, {
-        "Set-Cookie": makeCookie("", 0)
+
+      return new Response("Apna Nazariya Studio is running.", {
+        headers: { "Content-Type": "text/plain; charset=utf-8" }
       });
-    }
-
-    // LOGIN STATUS
-    if (path === "/api/me" && method === "GET") {
-      const session = await authenticate(request, env);
-      return json({ ok: true, authenticated: Boolean(session) });
-    }
-
-    // ALL FOLLOWING ROUTES REQUIRE LOGIN
-    const session = await authenticate(request, env);
-    if (!session) {
+    } catch (error) {
       return json({
         ok: false,
-        error: "Unauthorized. Please login again."
-      }, 401);
+        error: String(error?.message || error)
+      }, 500);
     }
-
-    // THUMBNAIL GENERATION API
-    if (path === "/api/thumbnails/generate" && method === "POST") {
-      const body = await readBody(request);
-      if (!body) return json({ ok: false, error: "Invalid JSON" }, 400);
-
-      try {
-        return await generateThumbnails(env, body);
-      } catch (error) {
-        return json({
-          ok: false,
-          error: "Thumbnail generation failed",
-          details: String(error.message || error).slice(0, 500)
-        }, 502);
-      }
-    }
-
-    // PROFILE GET
-    if (path === "/api/profile" && method === "GET") {
-      return getProfile(env);
-    }
-
-    // PROFILE SAVE
-    if (path === "/api/profile" && method === "POST") {
-      const body = await readBody(request);
-      if (!body) return json({ ok: false, error: "Invalid JSON" }, 400);
-
-      await saveProfile(env, body);
-      return json({ ok: true, message: "Profile saved" });
-    }
-
-    // GENERAL AI
-    if (path === "/api/ai" && method === "POST") {
-      const body = await readBody(request);
-      if (!body) return json({ ok: false, error: "Invalid JSON" }, 400);
-
-      const prompt = String(body.prompt || "").trim();
-      if (!prompt || prompt.length > MAX_PROMPT_LENGTH) {
-        return json({ ok: false, error: "Prompt missing or too long" }, 400);
-      }
-
-      const match = prompt.match(/SELECTED AGENT:\s*([^\r\n]+)/i);
-      const agentName = match ? match[1].trim() : "General Assistant";
-
-      const systemPrompt = `
-${BASE_RULES}
-
-SELECTED AGENT:
-${agentName}
-
-SPECIALIST INSTRUCTIONS:
-${AGENTS[agentName] || "उपयोगकर्ता के काम का स्पष्ट, उपयोगी जवाब दो।"}
-`;
-
-      try {
-        const answer = await runModel(env, systemPrompt, prompt);
-        return json({ ok: true, agent: agentName, answer });
-      } catch (error) {
-        return json({
-          ok: false,
-          error: "AI request failed",
-          details: String(error.message || error).slice(0, 1000)
-        }, 502);
-      }
-    }
-
-    // START WORKFLOW
-    if (path === "/api/workflow/start" && method === "POST") {
-      const body = await readBody(request);
-      if (!body) return json({ ok: false, error: "Invalid JSON" }, 400);
-      return startWorkflow(env, body);
-    }
-
-    // EXECUTE NEXT WORKFLOW STEP
-    if (path === "/api/workflow/step" && method === "POST") {
-      const body = await readBody(request);
-      const jobId = String(body?.jobId || "");
-      if (!jobId) return json({ ok: false, error: "jobId is required" }, 400);
-      return executeWorkflowStep(env, jobId);
-    }
-
-    // WORKFLOW STATUS
-    if (path === "/api/workflow/status" && method === "GET") {
-      const jobId = url.searchParams.get("jobId") || "";
-      if (!jobId) return json({ ok: false, error: "jobId is required" }, 400);
-      return getWorkflowStatus(env, jobId);
-    }
-
-    // RESUME WORKFLOW
-    if (path === "/api/workflow/resume" && method === "POST") {
-      const body = await readBody(request);
-      const jobId = String(body?.jobId || "");
-      if (!jobId) return json({ ok: false, error: "jobId is required" }, 400);
-      return resumeWorkflow(env, jobId);
-    }
-
-    // PROJECT LIST
-    if (path === "/api/projects" && method === "GET") {
-      return listProjects(env);
-    }
-
-    // PROJECT DETAILS
-    if (path.startsWith("/api/projects/") && method === "GET") {
-      const projectId = decodeURIComponent(path.slice("/api/projects/".length));
-      if (!projectId || projectId.length > 100) {
-        return json({ ok: false, error: "Invalid project ID" }, 400);
-      }
-      return getProject(env, projectId);
-    }
-
-    return json({ ok: false, error: "API route not found" }, 404);
   }
 };
