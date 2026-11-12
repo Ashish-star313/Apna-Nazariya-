@@ -78,7 +78,7 @@ footer{text-align:center;color:var(--muted);font-size:12px;padding:25px}.hint{fo
 <section id="tab-tools" class="tab panel hidden">
 <h2>🧠 AI Tools Desk</h2><p class="muted">किसी एक काम के लिए AI से सहायता लें।</p>
 <label>AI Tool चुनें</label><select id="toolType">
-<option value="Research & Source Collector">Research & Source Collector</option><option value="Independent Fact Checker">Independent Fact Checker</option><option value="Human Scriptwriter">Human Scriptwriter</option><option value="Editorial Quality Controller">Editorial Quality Controller</option><option value="Script Revision Specialist">Script Revision Specialist</option><option value="Final Approval & Quality Score">Final Approval & Quality Score</option><option value="Hook & Retention">Hook & Retention</option><option value="Title Specialist">Title Specialist</option><option value="Thumbnail Designer">Thumbnail Designer</option><option value="SEO Specialist">SEO Specialist</option><option value="Shorts Producer">Shorts Producer</option><option value="Editing Assistant">Editing Assistant</option><option value="Publishing Assistant">Publishing Assistant</option><option value="Analytics Specialist">Analytics Specialist</option><option value="Growth Strategist">Growth Strategist</option><option value="Live Producer">Live Producer</option>
+<option value="AI Manager">AI Manager</option><option value="Trend Hunter">Trend Hunter</option><option value="Competitor Intelligence">Competitor Intelligence</option><option value="Research & Source Collector">Research & Source Collector</option><option value="Independent Fact Checker">Independent Fact Checker</option><option value="Human Scriptwriter">Human Scriptwriter</option><option value="Editorial Quality Controller">Editorial Quality Controller</option><option value="Script Revision Specialist">Script Revision Specialist</option><option value="Final Approval & Quality Score">Final Approval & Quality Score</option><option value="Hook & Retention">Hook & Retention</option><option value="Title Specialist">Title Specialist</option><option value="Thumbnail Designer">Thumbnail Designer</option><option value="SEO Specialist">SEO Specialist</option><option value="Shorts Producer">Shorts Producer</option><option value="Editing Assistant">Editing Assistant</option><option value="Publishing Assistant">Publishing Assistant</option><option value="Analytics Specialist">Analytics Specialist</option><option value="Growth Strategist">Growth Strategist</option><option value="Live Producer">Live Producer</option>
 </select>
 <label>Topic / Instructions</label><textarea id="toolPrompt" placeholder="अपना सवाल या काम लिखें"></textarea>
 <label>Source URLs (optional, हर लाइन में एक)</label><textarea id="toolSourceUrls" placeholder="https://mospi.gov.in/..."></textarea>
@@ -165,6 +165,7 @@ async function runAllRemaining(){
    const data=await api("/api/workflow/step",{method:"POST",body:JSON.stringify({jobId:currentJobId})});
    await updateStatus();
    if(data.needsReview){toast("Editorial review जरूरी है — आगे बढ़ने से पहले रिपोर्ट देखें।");break}
+   if(data.paused){toast("Workflow Error पर रुका है। Error agent ठीक करके Retry करें।");break}
    if(data.completed){toast("पूरा Production Workflow समाप्त! 🎉");break}
   }
  }catch(error){toast(error.message);await updateStatus().catch(()=>{})}
@@ -186,7 +187,7 @@ async function updateStatus(){
  agents.forEach(agent=>{if(agent.status==="completed"&&agent.output)addOutput($("workflowOutputs"),agent.agent_name,agent.output);else if(agent.status==="error"){const p=document.createElement("p");p.className="bad";p.textContent=agent.agent_name+": "+(agent.error||"Error");$("workflowOutputs").appendChild(p)}else if(agent.status==="blocked"){const p=document.createElement("p");p.className="muted";p.textContent=agent.agent_name+": Human review pending";$("workflowOutputs").appendChild(p)}});
 }
 async function resumeWorkflow(){
- if(!currentJobId)return;try{await api("/api/workflow/resume",{method:"POST",body:JSON.stringify({jobId:currentJobId})});toast("Workflow Resume हो गया");await updateStatus()}
+ if(!currentJobId)return;try{const result=await api("/api/workflow/resume",{method:"POST",body:JSON.stringify({jobId:currentJobId})});toast(result.message||"Workflow Resume हो गया");await updateStatus()}
  catch(error){toast(error.message)}
 }
 async function runTool(){
@@ -216,8 +217,23 @@ async function loadProjects(){
  }catch(error){$("projectList").textContent=error.message}
 }
 async function openProject(id){
- try{const data=await api("/api/projects/"+encodeURIComponent(id));$("projectDetail").innerHTML="";const heading=document.createElement("h3");heading.textContent=data.project.topic;$("projectDetail").appendChild(heading);(data.outputs||[]).forEach(item=>addOutput($("projectDetail"),item.agent_name,item.content))}
- catch(error){toast(error.message)}
+ try{
+  const data=await api("/api/projects/"+encodeURIComponent(id));
+  $("projectDetail").innerHTML="";
+  const heading=document.createElement("h3");heading.textContent=data.project.topic||"Untitled Project";$("projectDetail").appendChild(heading);
+  (data.outputs||[]).forEach(item=>addOutput($("projectDetail"),item.agent_name,item.content));
+  currentProjectId=id;
+  currentJobId=data.jobs&&data.jobs.length?data.jobs[0].id:null;
+  showTab("production");
+  if(currentJobId){
+   $("workflowArea").classList.remove("hidden");
+   await updateStatus();
+   toast("पुराना project Production में खुल गया ✓");
+  }else{
+   $("workflowArea").classList.add("hidden");
+   toast("Project खुल गया, लेकिन इसका workflow job उपलब्ध नहीं है।");
+  }
+ }catch(error){toast(error.message)}
 }
 async function generateThumbnails(){
  const topic=$("thumbTopic").value.trim();if(!topic){toast("Topic लिखें");return}
