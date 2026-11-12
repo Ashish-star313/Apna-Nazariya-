@@ -318,7 +318,7 @@ async function saveProfile(env, body) {
   if (Array.isArray(body.referenceChannels)) {
     await env.DB.prepare("DELETE FROM channels").run();
     for (const url of body.referenceChannels.slice(0, 20)) {
-      if (typeof url === "string" && url.trim()) await env.DB.prepare("INSERT INTO channels (id,url) VALUES (?,?)").bind(uuid(), url.trim().slice(0, 500)).run();
+      if (typeof url === "string" && url.trim()) await env.DB.prepare("INSERT INTO channels (url) VALUES (?)").bind(url.trim().slice(0, 500)).run();
     }
   }
   return getProfile(env);
@@ -441,9 +441,17 @@ async function runNextStep(env, jobId) {
 
   const next = await env.DB.prepare(`SELECT * FROM agent_runs WHERE job_id=? AND status='queued' ORDER BY rowid ASC LIMIT 1`).bind(jobId).first();
   if (!next) {
-    await env.DB.prepare("UPDATE workflow_jobs SET status='completed',updated_at=? WHERE id=?").bind(now(), jobId).run();
-    await env.DB.prepare("UPDATE projects SET status='completed',updated_at=? WHERE id=?").bind(now(), job.project_id).run();
-    return { completed: true };
+    const remaining = await env.DB.prepare(
+      "SELECT status,COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status IN ('queued','running','blocked','error') GROUP BY status"
+    ).bind(jobId).all();
+    const states = Object.fromEntries((remaining.results || []).map(x => [x.status, Number(x.total || 0)]));
+    const hasBlocked = (states.blocked || 0) > 0;
+    const hasErrors = (states.error || 0) > 0;
+    const hasRunning = (states.running || 0) > 0;
+    const finalStatus = hasBlocked ? "needs_review" : hasErrors ? "paused" : hasRunning ? "running" : "completed";
+    await env.DB.prepare("UPDATE workflow_jobs SET status=?,updated_at=? WHERE id=?").bind(finalStatus, now(), jobId).run();
+    await env.DB.prepare("UPDATE projects SET status=?,updated_at=? WHERE id=?").bind(finalStatus, now(), job.project_id).run();
+    return { completed: finalStatus === "completed", needsReview: hasBlocked, paused: hasErrors, remaining: states };
   }
 
   await env.DB.prepare("UPDATE workflow_jobs SET status='running',error=NULL,updated_at=? WHERE id=?").bind(now(), jobId).run();
@@ -460,6 +468,11 @@ async function runNextStep(env, jobId) {
       sources = sourceContext(fetched);
       if (fetched.errors.length) sources += "\n\nSOURCE FETCH ERRORS:\n" + JSON.stringify(fetched.errors, null, 2);
       if (!sources) sources = "कोई source पढ़ा नहीं जा सका। Errors: " + JSON.stringify(fetched.errors);
+      // Persist collected evidence for downstream agents, especially the Fact Checker.
+      input.sourceMaterial = sources;
+      const savedInput = JSON.stringify(input);
+      await env.DB.prepare("UPDATE projects SET input_json=?,updated_at=? WHERE id=?").bind(savedInput, now(), job.project_id).run();
+      await env.DB.prepare("UPDATE workflow_jobs SET input_json=?,updated_at=? WHERE id=?").bind(savedInput, now(), jobId).run();
     }
     const prompt = buildAgentPrompt(next.agent_name, input, previous.results || [], profile, sources);
     const output = await runModel(env, BASE_RULES, prompt.slice(0, MAX_PROMPT_LENGTH), 3200);
@@ -472,7 +485,7 @@ async function runNextStep(env, jobId) {
       .bind(uuid(), job.project_id, jobId, "agent_output", next.agent_name, next.agent_name, output, timestamp).run();
 
     const counts = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status='completed'").bind(jobId).first();
-    const pending = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status IN ('queued','running')").bind(jobId).first();
+    const pending = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status IN ('queued','running','blocked','error')").bind(jobId).first();
     const completed = Number(pending?.total || 0) === 0;
 
     if (next.agent_name === "Final Approval & Quality Score") {
@@ -603,10 +616,14 @@ async function handleApi(request, env) {
     if (!body.jobId) return json({ ok: false, error: "jobId जरूरी है।" }, 400);
     const job = await env.DB.prepare("SELECT * FROM workflow_jobs WHERE id=?").bind(body.jobId).first();
     if (!job) return json({ ok: false, error: "Workflow नहीं मिला।" }, 404);
+    const retry = await env.DB.prepare("SELECT COUNT(*) AS total FROM agent_runs WHERE job_id=? AND status='error'").bind(body.jobId).first();
+    if (!Number(retry?.total || 0)) {
+      return json({ ok: false, error: "Retry करने के लिए कोई Error agent नहीं मिला। यदि workflow Human Review पर है, पहले उसकी रिपोर्ट देखें।" }, 409);
+    }
     await env.DB.prepare(`UPDATE agent_runs SET status='queued',error=NULL WHERE job_id=? AND status='error'`).bind(body.jobId).run();
     await env.DB.prepare("UPDATE workflow_jobs SET status='queued',error=NULL,updated_at=? WHERE id=?").bind(now(), body.jobId).run();
     await env.DB.prepare("UPDATE projects SET status='running',updated_at=? WHERE id=?").bind(now(), job.project_id).run();
-    return json({ ok: true });
+    return json({ ok: true, message: `${Number(retry.total)} failed agent(s) retry queue में डाल दिए गए।`, retried: Number(retry.total) });
   }
   if (path === "/api/workflow/continue" && method === "POST") {
     const body = await readBody(request);
